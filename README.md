@@ -129,6 +129,9 @@ of what it converted and of anything with no place in 2.0.
 **Edit from a computer:** the [Skiff Editor](https://illuminus5.github.io/skiff/webapp/editor/) (Chrome or
 Edge, over USB MIDI).
 
+**Edit from an iPad:** [Skiff for iPad](https://git.peterscharmueller.com/tompeak/skiff-ipad.git), the editor, the
+installer, Try and Learn as an app, with the FM-1 on the iPad's USB-C port (or a hub).
+
 ## At a glance
 
 | | |
