@@ -1123,7 +1123,7 @@ async function editorLists() {
   ok(act(0x90, 49, 127, 1) === '{"do":"entry","k":1,"e":9}', "apc: page I..P: T2's second row is J");
   ok(act(0x90, 62, 127) === '{"do":"scene","s":0}' && act(0x90, 7, 127) === '{"do":"scene","s":15}', "apc: columns 7, 8: scenes 1 and 16");
   ok(act(0x90, 105, 127) === '{"do":"mute","k":5}' && act(0x90, 106, 127) === "null", "apc: bottom button 6 T6's MUTE; the seventh nothing");
-  ok(act(0x90, 113, 127) === '{"do":"page","page":1}' && act(0x90, 119, 127) === '{"do":"play"}' && act(0x90, 118, 127) === "null", "apc: the side buttons: page, PLAY");
+  ok(act(0x90, 113, 127) === '{"do":"page","page":1}' && act(0x90, 119, 127) === '{"do":"play"}' && act(0x90, 116, 127) === "null", "apc: the side buttons: page, PLAY (the fifth nothing)");
   ok(act(0xB0, 50, 99) === '{"do":"level","k":2,"v":99}' && act(0xB0, 54, 99) === "null", "apc: fader 3 T3's LEVEL; fader 7 nothing");
   ok(act(0x80, 56, 0) === "null" && act(0x90, 56, 0) === "null", "apc: let go: nothing");
   const A = E.APC, none = { pat: 0 }, ent = (m) => Array.from({ length: 16 }, (_, e) => m[e] || none);
@@ -1144,7 +1144,15 @@ async function editorLists() {
   m = E.apcLeds(list, perf, 1, false);
   ok(led(56) === `${A.KEPT},${A.WHITE}` && m.get(A.PAGE + 1)[1] === 1 && !m.get(A.PLAY)[1], "apc: page I..P shows I..P");
   m = E.apcLeds(null, null, 0, false);
-  ok(m.size === 64 + 6 + 2 + 1 && [...m.values()].every((x) => x[1] === 0), "apc: no device: every LED dark");
+  ok(m.size === 64 + 6 + 2 + 1 + 1 && [...m.values()].every((x) => x[1] === 0), "apc: no device: every LED dark");
+  ok(act(0x90, A.NOTE, 127) === '{"do":"store","on":true}' && act(0x80, A.NOTE, 0) === '{"do":"store","on":false}' &&
+     act(0x90, A.NOTE, 0) === '{"do":"store","on":false}' && JSON.stringify(E.apcAction([0x90, A.NOTE, 127], 0, "pats")) === "null" &&
+     JSON.stringify(E.apcAction([0x90, A.NOTE, 127], 0, "lanes")) === "null",
+     "apc: NOTE (the seventh side button) held and let go, in the song only");
+  m = E.apcLeds(list, perf, 0, false, [], true);
+  ok(m.get(A.NOTE)[1] === 1 && led(62) === `${A.KEPT},${A.WHITE}` && led(54) === `${A.FULL},${A.GREEN}` &&
+     led(46) === `${A.FAINT},${A.WHITE}` && !E.apcLeds(list, perf, 0, false).get(A.NOTE)[1],
+     "apc: NOTE held: lit, an empty scene 10 % white (a slot to store into), the kept ones as they are");
   /* SHIFT: the drum mode */
   const dact = (st, n, v, drum = "lanes") => JSON.stringify(E.apcAction([st, n, v], 0, drum));
   ok(act(0x90, A.SHIFT, 127) === '{"do":"shift"}' && dact(0x90, A.SHIFT, 127) === '{"do":"shift"}' && act(0x80, A.SHIFT, 0) === "null",

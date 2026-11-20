@@ -114,7 +114,8 @@ fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_i
 - **Akai APC mini mk2:** the pads in the tracks' own colours; **SHIFT** a pattern mode (the 64 patterns on the pads,
   in two-row colour bands, 49–64 the drum patterns; bottom buttons pick the track, a pad plays its pattern); **DRUM**
   (the sixth side button) a drum mode (a DRUM track's lanes as red level bars, the faders their levels, the buttons
-  their mutes). The same controller works without a computer through
+  their mutes); **NOTE held + a scene pad** stores a scene (the official editor only recalls them). The same controller
+  works without a computer through
   [apcconnect](https://git.peterscharmueller.com/tompeak/apcconnect.git), an ESP32-S3 USB host.
 - **Skiff for iPad:** the editor, installer, Try and Learn as an iPad app (below).
 
@@ -392,7 +393,7 @@ tracks' colours of the THEME.
 | Control | Does |
 |---|---|
 | Pads, columns 1–6 | T1–T6's list entries, A at the top (green: playing, blinking: next, the track's colour: kept, dim: a REST) |
-| Pads, columns 7–8 | the scenes 1–8 and 9–16, top down (green: the last recalled) |
+| Pads, columns 7–8 | the scenes 1–8 and 9–16, top down (green: the last recalled): a press recalls one; **NOTE held** (the seventh side button, lit while held) stores the tracks as they are into the one pressed, the empty ones lit faintly |
 | Bottom buttons 1–6 | T1–T6's MUTE (lit: muted, flashing: staged) |
 | Side buttons 1–2 | the page: entries A–H or I–P |
 | Bottom side button | PLAY |
