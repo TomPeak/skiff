@@ -22,7 +22,8 @@
 #include <sys/resource.h>
 #endif
 
-#define MOD_COST_MAX 5.0          /* % more instructions per sample with every slot active, at most */
+#define MOD_COST_MAX 6.0          /* % more instructions per sample with every slot active, at most ((Skiff) 6: the
+                                   * 4-part mix +5.4 % since 2.0, the same ~25 a sample a part; its base moved) */
 
 static int bad;
 static void check(const char *what, int ok)

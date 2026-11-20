@@ -520,8 +520,10 @@ static int autosave_test(void)
                 }
             printf("persist:   .. and %u pattern pool erases, the tracks' in %u chunks (about %u per sector)\n",
                    (unsigned)pool_erases, (unsigned)n, (unsigned)(pool_erases / (n + 4u)));
-            bad += check("  (phase 5) the patterns too: a round every 20 s at most, each chunk changed one write a round",
-                         n && pool_erases > 0u && pool_erases <= as_erases * n);
+            /* (a round writes a chunk a poll, 250 ms: an edit landing before its project write, 4 chunks and the 1 s
+             * of idle here, is kept when the round goes on, its chunk once more) */
+            bad += check("  (phase 5) the patterns too: a round every 20 s at most, each chunk changed one write a round (+1 an edit in it)",
+                         n && pool_erases > 0u && pool_erases <= as_erases * (n + 1u));
         }
     }
     return bad;
