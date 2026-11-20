@@ -1443,8 +1443,8 @@ static void step_edit(uint32_t slot, int32_t steps)
 }
 
 /* (Skiff phase 5) SEQ > SONG's knobs (ui.c sg): 1 the selected track's entry (A..P), 2 a pattern for it, put in by
- * OCT+ (an empty entry's "--" first, (#28) REST, 01 .. 64 in order (the user's pick: a free one dim, NEW into it), then COPY: a copy of its own; (2.0) NEW,
- * COPY+: below), 3 its repeats (1..16), 4 SONG OFF, ON, ((2.0) ONCE). own: what the entry holds (0 empty, a pattern
+ * OCT+ (an empty entry's "--" first, (#28) REST, 01 .. 64 in order (the user's pick: a free one dim, NEW into it),
+ * then COPY: a copy of its own; (2.0) NEW, COPY+: below), 3 its repeats (1..16), 4 SONG OFF, ON, ((2.0) ONCE). own: what the entry holds (0 empty, a pattern
  * id + 1, PAT_REST) */
 static int song_pick_ok(uint32_t v, uint32_t own)
 {
@@ -1458,7 +1458,7 @@ static int song_pick_ok(uint32_t v, uint32_t own)
         return own != 0u;                             /* entry's, a pattern's or a REST's) */
     if (v == SPICK_NOSND)                             /* (.. NO SOUND: one with a sound) */
         return lists.snd[song.sel % NTRK][sg.entry % NENT][0] != 0u;
-    return v <= NPAT && (pool_used(v - 1u) || pat_free(v - 1u));   /* ((the user's pick) a free one: NEW into it) */
+    return v <= NPAT;                                 /* ((the user's pick) a free one too: NEW into it) */
 }
 /* .. KNOB 2's turn order: --, ((2.0, #32, the user's pick 1A) NEW: an empty entry's), REST, 01 .. 64, (NEW: a used
  * entry's), COPY, ((#33) COPY+), CLEAR, ((#30) SOUND, NO SOUND): a pick's place (own: an empty entry's NEW first), and

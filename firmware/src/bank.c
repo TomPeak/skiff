@@ -386,16 +386,6 @@ static int pat_keep_now(uint32_t id, const uint8_t *r)
 static uint32_t keep_waiting(void) { return pend_free() == PEND_N ? 0u : pend_free() ? 1u : 2u; }
 /* an empty id, none waiting either */
 static int pat_free(uint32_t id) { return id < BK_POOL && !pool_used(id) && pend_at(id) == PEND_N; }
-/* the first empty id for track k: (the user's pick) a DRUM or DRUM-X track's in the last 16 (49 .. 64) first, then
- * round from 01; another's (NTRK: any track's) from 01, so the last 16 last; NPAT: the pool full */
-static uint32_t pool_alloc(uint32_t k)
-{
-    uint32_t i, id, at = k < NTRK && drum_track(&trk[k]) ? BK_POOL - PAT_DRUMS : 0u;
-    for (i = 0; i < BK_POOL; i++)
-        if (pat_free(id = (at + i) % BK_POOL))
-            return id;
-    return NPAT;
-}
 /* (2.0, #34, the user's pick 2A) a copy's number: the first free after its original's (06's copy is 08 when 07 is
  * used), round to the first free before it, ((#44) none of taken's: a chain's copies before it); NPAT: the pool full */
 static uint32_t pool_free_after(uint32_t orig, uint64_t taken)
@@ -403,12 +393,18 @@ static uint32_t pool_free_after(uint32_t orig, uint64_t taken)
     uint32_t i, id;
     for (i = 1; i <= BK_POOL; i++) {
         id = (orig + i) % BK_POOL;
-        if (!pool_used(id) && pend_at(id) == PEND_N && !((taken >> id) & 1u))
+        if (pat_free(id) && !((taken >> id) & 1u))
             return id;
     }
     return NPAT;
 }
 static uint32_t pool_alloc_after(uint32_t orig) { return pool_free_after(orig, 0); }
+/* the first empty id for track k: (the user's pick) a DRUM or DRUM-X track's in the last 16 (49 .. 64) first, then
+ * round from 01; another's (NTRK: any track's) from 01, so the last 16 last; NPAT: the pool full */
+static uint32_t pool_alloc(uint32_t k)
+{
+    return pool_free_after(k < NTRK && drum_track(&trk[k]) ? BK_POOL - PAT_DRUMS - 1u : BK_POOL - 1u, 0);
+}
 /* a pattern whose record is r (the LENs compared first); NPAT none */
 static uint32_t pool_find(const uint8_t *r)
 {

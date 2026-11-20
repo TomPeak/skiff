@@ -997,8 +997,9 @@ static void draw_columns(void)
             pat_num(val, v - 1u);                        /* ((the user's pick) a free one dim: NEW into it) */
         else
             str_cpy(val, "--", sizeof val);
-        draw_column(1, "PATTERN", val, "", v && (v > NPAT || pool_used(v - 1u)) ? VR_LIVE : VR_DIM, v >= SPICK_SOUND ? -1 : v >= SPICK_NEW ? 1000 :
-                    v == PAT_REST ? 0 : v ? (int32_t)(v * 1000u / NPAT) : -1, ICON_AUTO);
+        draw_column(1, "PATTERN", val, "", v && (v > NPAT || pool_used(v - 1u)) ? VR_LIVE : VR_DIM,
+                    v >= SPICK_SOUND ? -1 : v >= SPICK_NEW ? 1000 : v == PAT_REST ? 0 : v ? (int32_t)(v * 1000u / NPAT) : -1,
+                    ICON_AUTO);
         fmt_int(val, (int32_t)r);                        /* ((1.2.1, #12) an empty entry's too: a rest's length) */
         if (r > 16u)                                     /* ((2.0, #44) on CHAIN into the next: below 1x, no gauge */
             draw_column(2, "REPS", "CHAIN", "", VR_LIVE, -1, ICON_AUTO);
