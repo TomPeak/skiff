@@ -56,6 +56,9 @@
 # REVERB (tests/reverb_test.c): REVERB TYPE (src/fx.c): ROOM bit for bit as before, SPRING's decay against SIZE,
 #                   its chirp (group delay rising with frequency), stability at the corners, level, a model change
 #                   without a click, its cost against ROOM (+30 % at most); demos in build/fx_demo/.
+# STDELAY (tests/stdelay_test.c, 2.5): the DELAY MODE (src/fx.c G_DMODE): MONO bit for bit as 2.2; STEREO keeps an
+#                   echo on its side, PING crosses them; feedback, corners, a MODE change, the stereo chorus, the sends by
+#                   PAN and THROW; demos in build/fx_demo/.
 # SLICE (tests/slice_test.c): slice tables, AUTO onsets of a user-slot loop, reverse, keys, modes, the MAN slices
 #                   (SLICES page) and their store in the slot (src/slice_store.c); the presets and the loop;
 #                   demos in build/slice_demo/.
@@ -263,6 +266,8 @@ if [ -f build/gen/felucca_tables.h ]; then
     run "scales: white-key mapping and note lifecycle" "$OUT/scale_test"
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/chord_test" tests/chord_test.c -lm
     run "chord keys: diatonic and fixed chords, voicings, MONO root, releases, recording, ARP, MIDI IN, kits" "$OUT/chord_test"
+    $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/freetake_test" tests/freetake_test.c -lm
+    run "(2.5) FREE TAKES: played stopped, the tempo, BARS and first beat guessed, the picker, OCT- / OCT+, one undo" "$OUT/freetake_test"
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/follow_test" tests/follow_test.c -lm
     run "(2.1) chord follow: roots, KEY SCALE FIT, NOTE, the tick order, ties, keys MIDI ARP, recording, STOP, kits, ids" "$OUT/follow_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/speaker_test" tests/speaker_test.c -lm
@@ -315,7 +320,7 @@ if [ -f build/gen/felucca_tables.h ]; then
     $CC -w $LEGACY -Ibuild/gen -Ifirmware/src -o "$OUT/ui_test_legacy" tests/ui_test.c -lm
     run "UI, the converter's build (FELUCCA_LEGACY): DIGITAL sounds, SAMPLE PERC and old GM projects converted as 1.x did" "$OUT/ui_test_legacy"
     $CC -w -DFELUCCA_CDC=0 -Ibuild/gen -Ifirmware/src -o "$OUT/ui_test_rel" tests/ui_test.c -lm
-    run "UI as a release builds it (FELUCCA_CDC=0, build.py --release): no USB SERIAL row, the rest as above" "$OUT/ui_test_rel"
+    run "UI as build.py builds it (FELUCCA_CDC=0, (2.7) all but --console): no USB SERIAL row, the rest as above" "$OUT/ui_test_rel"
     FV=$(sed -n 's/^#define FELUCCA_VERSION "\([^"]*\)".*/\1/p' firmware/src/felucca.c)   # (the splash, ABOUT: the real version)
     # (Skiff 2.0) ABOUT's build date fixed, so the UI golden holds from day to day
     $CC -O1 -w "-DFELUCCA_VERSION=\"$FV\"" '-D__DATE__="Jan  1 2026"' -Ibuild/gen -Ifirmware/src -Itests \
@@ -332,8 +337,12 @@ if [ -f build/gen/felucca_tables.h ]; then
         "$OUT/ui_render_fm4" build/ui_fm4 build/ui_fm4_slot
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/audio_test" tests/audio_test.c -lm
     run "audio: overload protection, bounded fades and DMA diagnostics" "$OUT/audio_test"
+    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/tail_test" tests/tail_test.c -lm
+    run "(2.5, #110) TAIL: a fading note keeps its shape to the DAC (24 bits) and USB (dithered 16), MASTER 100 % and 25 %" "$OUT/tail_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/click_test" tests/click_test.c -lm
     run "metronome and count-in: beats sample for sample (internal and external clock), accent, level, MASTER, not in USB, count-in timing, notes onto step 1" "$OUT/click_test"
+    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/sync_out_test" tests/sync_out_test.c -lm
+    run "MENU > AUDIO > SYNC OUT: NO SYNC bit for bit (an old STYLE byte too), L / R SYNC mono + pulses, PPQN 1..24 on the grid, the pulse width, none stopped, USB unchanged" "$OUT/sync_out_test"
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/persistence_test" tests/persistence_test.c -lm
     run "persistence: deferred settings, retry and failed-save rollback; (2.0) a FUN5 slot OLD FORMAT" "$OUT/persistence_test"
     $CC -w $LEGACY -Ibuild/gen -Ifirmware/src -o "$OUT/persistence_test_legacy" tests/persistence_test.c -lm
@@ -360,7 +369,7 @@ if [ -f build/gen/felucca_tables.h ]; then
     run "editor: real C protocol, malformed transfers, queue recovery, MENU settings (writes build/host/menu.json)" \
         env MENU_JSON="$OUT/menu.json" "$OUT/editor_test"
     $CC -w -DFELUCCA_CDC=0 -Ibuild/gen -Ifirmware/src -o "$OUT/editor_test_rel" tests/editor_test.c -lm
-    run "editor as a release builds it (FELUCCA_CDC=0): MENU settings without USB SERIAL (17; id 11 refused)" "$OUT/editor_test_rel"
+    run "editor as build.py builds it (FELUCCA_CDC=0): MENU settings without USB SERIAL (17; id 11 refused)" "$OUT/editor_test_rel"
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/robust_test" tests/robust_test.c -lm
     run "robustness: crafted sample slots, engine numbers, retained old projects, preset patterns, malformed requests" \
         "$OUT/robust_test"
@@ -375,6 +384,8 @@ if [ -f build/gen/felucca_tables.h ]; then
     run "SLICER: no clicks, timing, sync with the sequencer, STUT, cost, demos" "$OUT/slicer_test" build/slicer_demo
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/swing_test" tests/swing_test.c -lm
     run "SWING: track + global at most 100, sequencer and SLICER step lengths, the SWG display" "$OUT/swing_test"
+    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/drift_test" tests/drift_test.c -lm
+    run "(2.5, #107) DRIFT: the quarter x24, every DIV a share; 5 DIVs, the click, the launch points together for 30 min" "$OUT/drift_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/perform_test" tests/perform_test.c -lm
     mkdir -p build/perform_demo build/fx_demo
     run "FX layer effects: on the 1/16, stereo, too-long REPEAT, SLICER, silent keys, idle bit-identical, clicks, OCT UP / DN, cost, demos" "$OUT/perform_test" build/perform_demo build/fx_demo
@@ -384,6 +395,8 @@ if [ -f build/gen/felucca_tables.h ]; then
     run "DRIVE (Skiff phase 9): DIST's TYPE SOFT HARD FOLD BITS and TONE; SOFT at TONE 0 as before, bit for bit" "$OUT/drive_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/reverb_test" tests/reverb_test.c -lm
     run "REVERB TYPE: ROOM bit-identical, SPRING decay / chirp / stability / level, model change, cost, demos" "$OUT/reverb_test" build/fx_demo
+    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/stdelay_test" tests/stdelay_test.c -lm
+    run "(2.5) DELAY MODE: MONO bit for bit as 2.2, STEREO sides, PING crossing, feedback, corners, a change, stereo chorus, sends; demos" "$OUT/stdelay_test" build/fx_demo
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/regress" tests/regress.c -lm
     run "regression: golden renders, health, voices, CPU budget" "$OUT/regress" tests/golden.txt tests/cpu_baseline.txt
     # (Skiff 1.3) the second core (MENU > CPU 2 CORES: fx.c mix_block, tests/c1_host.h): a thread renders the tracks
@@ -398,7 +411,7 @@ if [ -f build/gen/felucca_tables.h ]; then
     run "second core: six tracks of every preset, mixes: bit for bit on one core and on two, every split" \
         "$OUT/dualcore_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -pthread -o "$OUT/dualcore_budget" tests/dualcore_test.c -lm
-    run "second core: the voice budget, 8 on one core, VOICES_2CORE with two" env BUDGET=1 "$OUT/dualcore_budget"
+    run "second core: the voice budget, 8 on one core, VOICES_2CORE ((2.5) 16) with two" env BUDGET=1 "$OUT/dualcore_budget"
     if $CC -fsanitize=thread -pthread -x c -o /dev/null - <<EOF 2>/dev/null
 int main(void) { return 0; }
 EOF

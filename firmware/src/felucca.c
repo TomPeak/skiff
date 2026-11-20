@@ -46,10 +46,13 @@
 #endif
 #endif
 #ifndef FELUCCA_VERSION
-#define FELUCCA_VERSION "v2.2"       /* Skiff's; shown in the menu, the console and the editor; build.py --release X.Y */
+#define FELUCCA_VERSION "v2.7"       /* Skiff's; shown in the menu, the console and the editor; build.py --release X.Y */
 #endif
 #if FELUCCA_OTA && !FELUCCA_FLASH
 #error "FELUCCA_OTA needs FELUCCA_FLASH"
+#endif
+#ifndef FELUCCA_CAST
+#define FELUCCA_CAST FELUCCA_OTA     /* (Skiff Studio) the cast (cast.c); the SMK-37's own controls too (X V D A) */
 #endif
 #ifndef FELUCCA_CPU2
 #define FELUCCA_CPU2 1           /* (Skiff 1.3, as Felucca 1.6.1) 1: the second core is built in and renders some tracks when
@@ -61,7 +64,10 @@
                                       * waiting loop is in RAM the ROM and the SPL use at boot) */
 /* (Skiff) audio code run from RAM (.ram_hot, app.ld), out of the XIP cache: the FX layer's (perform.c). From XIP it
  * shared the cache with the engines: on the unit, REPEAT 1/32 held cost +6 % CPU alone but +15 % under six busy
- * tracks (late halves, voices shed); 2 % by instruction count (the emulator). Never runs with the flash busy (the
+ * tracks (late halves, voices shed); 2 % by instruction count (the emulator). (2.5) And a track's block, on either core
+ * (fx.c mix_part, c1_parts: the voices' loop with what it calls each block, the matrix, SPREAD, DUCK, DRIVE, ENV 2, ENV
+ * SYNC, a kit's lane pans; 16 voices made the slowest block 86 % of a half): the engines' renders, the INSERT, the
+ * SLICER's steps and a user sample's own mix stay in XIP (AUDIO_FAR or a pointer). Never runs with the flash busy (the
  * audio ISR is off then), so it may call XIP code. Only here, the unit's build: core.h leaves it empty elsewhere.
  * RAM and XIP are over 4 MB apart, beyond a direct call's reach (fm1_flash.h FL_FAR): a call between them goes
  * through a pointer the compiler cannot fold back, AUDIO_FAR (the linker refuses a direct one). flatten: this clang
@@ -103,6 +109,14 @@ static inline __attribute__((always_inline)) void *audio_far(void *p) { void *vo
 /* ----------------------------------------------------- base, display --- */
 #include "libc.c"
 #include "lcd.c"
+#if FELUCCA_CAST                 /* (Skiff Studio) gfx.c cv_begin: a piece of the frame begins (cast.c cast_piece) */
+static void cast_piece(void);
+#define GFX_HOOKS 0
+#define GFX_HOOK_TEXT(x0, y0, x1, y1, s, flags) ((void)0)
+#define GFX_HOOK_BLIT(x, y, r0) ((void)0)
+#define GFX_HOOK_BEGIN() cast_piece()
+#define GFX_HOOK_PIXELS(n) ((void)0)
+#endif
 #include "gfx.c"
 
 /* ----------------------------------------------------------- sound --- */
@@ -154,4 +168,7 @@ static inline __attribute__((always_inline)) void *audio_far(void *p) { void *vo
 #include "smk_ui.c"              /* the SMK-37's own controls: pads, faders, wheels, pedal, < >, KEY VELOCITY */
 #endif
 #include "master.c"              /* the MASTER pot (#137: read before the audio starts) */
+#if FELUCCA_CAST
+#include "cast.c"                /* (Skiff Studio) the cast: a copy of Skiff in the browser follows this unit */
+#endif
 #include "main.c"

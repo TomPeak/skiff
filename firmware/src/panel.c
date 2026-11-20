@@ -6,6 +6,9 @@
  * (hold OCT- and OCT+ while powering on): FELUCCA asks for each label in turn.
  * The learned table lives in .noinit and, with FELUCCA_FLASH, in flash with
  * the settings (project.c); read it back with `fm1t memr` to bake it in. */
+#ifndef CAST
+#define CAST(x) ((void)0)                       /* ((Skiff Studio) core.h's cast hook: a test built without core.h) */
+#endif
 enum { B_FX, B_SCL, B_ENV, B_LFO, B_EDIT, B_GLO, B_HOME, B_SAVE, B_ARP, B_SEQ, B_PLAY, B_REC,
        B_OCTDN, B_OCTUP, NB };
 enum { EN_SELECT, EN_ALGO, EN_PRESET, EN_K1, EN_K2, EN_K3, EN_K4, NE };
@@ -84,11 +87,20 @@ static uint32_t panel_btn_of(uint32_t matrix_id)        /* label of a matrix but
     return NB;
 }
 
-/* steps of a role, + = clockwise */
+/* steps of a role, + = clockwise; ((2.5) REMOTE's turns added: midi_control.c through ui.c rmt_enc_q, in the audio ISR) */
 static uint8_t panel_moved;                     /* a knob turned since ui.c scr_input last looked (SCREEN OFF) */
+static volatile int16_t rmt_steps[NE];
 static int32_t panel_enc(uint32_t role)
 {
     int32_t s = fm1_enc_take(panel.enc[role]) * panel.dir[role];
+    if (s)                                      /* (Skiff Studio: the knob's own detents; REMOTE's come as MIDI) */
+        CAST(cast_rec('K', role | (uint32_t)cast.pass << 8, (uint32_t)s));
+    if (rmt_steps[role]) {
+        fm1_irq_off();
+        s += rmt_steps[role];
+        rmt_steps[role] = 0;
+        fm1_irq_on();
+    }
     if (s)
         panel_moved = 1;
     return s;

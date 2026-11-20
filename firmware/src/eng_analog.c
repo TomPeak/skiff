@@ -27,8 +27,12 @@ static const param_desc_t *analog_desc(const track_t *t, uint32_t k)
 
 static void analog_note_on(track_t *t, voice_t *v)
 {
-    (void)t;
-    v->ph[1] = v->ph[0] + 0x40000000u;
+    uint32_t sin = t->p[P_E0] == 3;
+    if (sin)                                          /* ((2.7, #110) SIN: both oscillators from their zero crossing, */
+        v->ph[0] = 0;                                 /* not where the voice's last note left OSC 1 (nor OSC 2 a quarter
+                                                       * on: at its peak with MIX up), a click; a retrigger keeps its
+                                                       * phases: voice_start) */
+    v->ph[1] = sin ? 0u : v->ph[0] + 0x40000000u;
     v->s[0] = v->s[1] = 0;                            /* filter */
     if (!v->s[2])
         v->s[2] = 0x1234567 + (int32_t)v->age;        /* noise state */
@@ -87,7 +91,7 @@ static __attribute__((noinline)) void analog_render_x(track_t *t, voice_t *v, in
         if (drv)
             s = softclip(((s >> 2) * (drive >> 2)) >> 11);
         s = soft_knee(tsvf_lp(&flt, s >> 1, &ic1, &ic2), 16000) << 1;
-        out[i] += voice_amp(s, m, i) << 1;
+        out[i] += voice_amp2(s, m, i);
     }
     v->ph[0] = ph0;
     v->ph[1] = ph1;
@@ -156,7 +160,7 @@ static inline __attribute__((always_inline)) void analog_osc(track_t *t, voice_t
             }
             s = y << 1;
         }
-        out[i] += voice_amp(s, m, i) << 1;
+        out[i] += voice_amp2(s, m, i);
     }
     v->ph[0] = ph0;
     v->ph[1] = ph1;

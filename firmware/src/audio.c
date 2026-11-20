@@ -31,17 +31,18 @@ static void audio_block(int32_t *out, uint32_t n)       /* mix (fx.c), then Q15 
     uint32_t i;
     mix_block(out, n);
 #if FELUCCA_UAC
-    uac_tap(out, n);                                    /* the USB audio input: the same master output */
+    uac_tap(out, dac_lo, n);                            /* the USB audio input: the same master output */
 #endif
     if (fx_usb_fixed)                                   /* USB LEVEL FIXED: USB took the full level, the DAC */
         usb_fixed_dac(out, n);                          /* (speaker, headphones) gets MASTER's (fx.c) */
     for (i = 1; i < n; i += 2u)                         /* the HOME scope: the music, before the click */
         scope_buf[scope_w++ & (SCOPE_N - 1u)] = (int16_t)out[2u * i];
     click_render(out, n);                               /* the metronome (click.c): the DAC only, not USB */
-    for (i = 0; i < n; i++) {
-        out[2u * i] *= 1 << OUT_SHIFT;
-        out[2u * i + 1u] *= 1 << OUT_SHIFT;
+    for (i = 0; i < n; i++) {                           /* ((2.5, #110) and MASTER's 7 bits below Q15: fx.c dac_lo) */
+        out[2u * i] = out[2u * i] * (1 << OUT_SHIFT) + dac_lo[2u * i];
+        out[2u * i + 1u] = out[2u * i + 1u] * (1 << OUT_SHIFT) + dac_lo[2u * i + 1u];
     }
+    sy_render(out, n);                                  /* MENU > AUDIO > SYNC OUT: mono + sync pulses, the DAC only (sync_out.c) */
 }
 
 /* Overload: two halves in a row above 85 % (the render plus TIMER5 nested in it), fade one voice over the
@@ -66,6 +67,7 @@ static void shed_voice(void)
 {
     uint32_t p, i;
     voice_t *best = 0;
+    CAST(cast_ev('s'));                                 /* (Skiff Studio: the copy can't know the unit's load) */
     for (p = 0; p < NPART; p++)
         for (i = 0; i < NVOICE; i++) {
             voice_t *v = &trk[p].v[i];

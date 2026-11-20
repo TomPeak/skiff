@@ -252,6 +252,53 @@
   .wells label { display: grid; justify-items: center; gap: 2px; font-size: 11px; color: var(--dim); }
   .wells input[type=color] { width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); background: none; }
   .wellbox { margin-top: 10px; }
+  /* (Skiff Studio) the Screen tab: the FM-1's 240 x 240 screen as large as the page allows, sharp pixels; tap: full */
+  #scr-status { color: var(--dim); margin-left: 6px; }
+  #scr-status.bad { color: var(--rec); }
+  #scr-wrap { display: grid; place-items: center; margin-top: 8px; position: relative; }
+  /* (2.7) #scr-dev: the screen alone (--ar 1) or inside the panel's drawing (.ctl, --ar its width / height: ../panel.js,
+     as Try Skiff's), as large as the page allows, or the display in full screen */
+  #scr-dev { --ar: 1; position: relative; width: min(100%, calc((100vh - 220px) * var(--ar))); min-width: 240px;
+             aspect-ratio: var(--ar); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+             --body: #1d1d1f; --tray: #141415; --part: #2a2a2d; --edge: #3a3a3e; --label: #d6d6d8; --lit: #fff4d6; --green: #5fe08a; }
+  #scr-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #scr-screen { position: absolute; inset: 0; width: 100%; height: 100%; background: black;
+                image-rendering: pixelated; border-radius: 6px; cursor: zoom-in; }
+  #scr-dev.ctl #scr-screen { inset: auto; border-radius: 0; cursor: default; }
+  #scr-wrap:fullscreen { background: black; }
+  #scr-wrap:fullscreen #scr-dev { width: min(100vw, calc(100vh * var(--ar))); }
+  /* (the screen alone: as large as the display, but clear of the exit's corner on a near-square one) */
+  #scr-wrap:fullscreen #scr-dev:not(.ctl) { width: min(100vw, 100vh, max(100vh - 80px, 100vw - 240px)); }
+  #scr-wrap:fullscreen #scr-screen { border-radius: 0; cursor: zoom-out; }
+  #scr-wrap:fullscreen #scr-dev.ctl #scr-screen { cursor: default; }
+  #scr-exit { display: none; position: absolute; top: 8px; right: 8px; }
+  #scr-wrap:fullscreen #scr-exit { display: block; }
+  /* (the tall drawing can reach the top on a tablet held upright: the exit goes over MASTER, a knob not turned here) */
+  #scr-dev.tall ~ #scr-exit { right: auto; left: 8px; }
+  #scr-dev .hit { position: absolute; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 10px; }
+  #scr-dev .hit.knob { cursor: ns-resize; border-radius: 50%; }
+  #scr-dev .hit:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+  #scr-dev .face { transition: fill .05s; }
+  #scr-dev .dim .face.btn { fill: #3a3934; }
+  #scr-dev .lit .face.btn { fill: var(--lit); }
+  #scr-dev .lit text { fill: #1d1d1f; }
+  #scr-dev .green .face.btn { fill: var(--green); }
+  #scr-dev .green text { fill: #0d2414; }
+  #scr-dev .face.key { fill: #0c0c0d; stroke: var(--edge); stroke-width: 1.5; }
+  #scr-dev .slit { fill: #3a3a3c; transition: fill .05s; }
+  #scr-dev .dim .slit { fill: #77777b; }
+  #scr-dev .lit .slit { fill: #ececee; filter: drop-shadow(0 0 3px rgba(255, 255, 255, .6)); }
+  #scr-dev .mid .slit { fill: #9a9a9e; }
+  #scr-dev .breath .face.btn { animation: scr-breath-btn 1.13s ease-in-out infinite; }
+  #scr-dev .breath .slit { animation: scr-breath-slit 1.13s ease-in-out infinite; }
+  @keyframes scr-breath-btn { 0%, 100% { fill: #3a3934; } 50% { fill: #d8cfb6; } }
+  @keyframes scr-breath-slit { 0%, 100% { fill: #3a3a3c; } 50% { fill: #c8c8ca; } }
+  @media (prefers-reduced-motion: reduce) {
+    #scr-dev .breath .face.btn { animation: none; fill: #aca592; }
+    #scr-dev .breath .slit { animation: none; fill: #a1a1a3; }
+  }
+  #scr-dev .held .face { stroke: var(--lit); stroke-width: 3; }
+  #scr-dev .latched .face { stroke: #79b8ff; stroke-width: 3; }
   /* ((Skiff 2.2) the sequencer as a DAW's: a piano roll (or the drum lanes) over the steps, a controller lane under it
      (velocity, chance, nudge, ratchet) drawn with the mouse, the picked step's knobs beside; the table stays below) */
   .sqtool { margin: 4px 0 6px; }
@@ -361,6 +408,7 @@
       <button role="tab" data-tab="library" data-t="library" data-ic="symbol_books"></button>
       <button role="tab" data-tab="samples" data-t="samples" data-ic="symbol_waves"></button>
       <button role="tab" data-tab="projects" data-t="projects" data-ic="symbol_folder"></button>
+      <button role="tab" data-tab="screen" data-t="tabScreen" data-ic="symbol_eye"></button>
       <button role="tab" data-tab="settings" data-t="tabSettings" data-ic="symbol_cog"></button>
     </nav>
     <div class="trackbar" id="trackbar" hidden><span class="dim" data-t="track"></span><span class="seg" id="trackbtns" role="group"></span></div>
@@ -413,6 +461,7 @@
     <div class="groups" id="seqgroups"></div>
     <div id="steps">
       <h2 data-t="steps" data-ic="note_eight"></h2>
+      <p class="dim" id="sqwhere" hidden></p>
       <p class="bar sqtool"><span class="seg" id="sqview" role="group"><button type="button" data-v="roll" data-t="sqRoll"
         data-ic="symbol_keyboard"></button><button type="button" data-v="drum" data-t="sqDrum" data-ic="symbol_grid"></button></span>
         <label><span data-t="sqZoom"></span> <input type="range" id="sqzoom" min="12" max="64" step="1"></label>
@@ -544,6 +593,19 @@
     </div>
   </section>
 
+  <section class="panel" id="p-screen" data-tab="screen" hidden>
+    <h2 data-t="scrTitle" data-ic="symbol_eye"></h2>
+    <p class="dim" data-t="scrHelp"></p>
+    <p class="bar"><button id="scr-start" data-t="scrStart"></button> <button id="scr-stop" data-t="scrStop" disabled></button>
+      <button id="scr-full" data-t="scrFull"></button>
+      <label><input type="checkbox" id="scr-ctl"> <span data-t="scrCtl"></span></label>
+      <span id="scr-status" role="status" aria-live="polite"></span></p>
+    <p class="dim" id="scr-keys" data-t="scrKeys" hidden></p>
+    <div id="scr-wrap"><div id="scr-dev"><svg id="scr-svg" aria-hidden="true"></svg>
+      <canvas id="scr-screen" width="240" height="240"></canvas></div>
+      <button id="scr-exit" type="button" data-t="scrExit"></button></div>
+  </section>
+
   <section class="panel" id="p-settings" data-tab="settings" data-dev hidden>
     <div class="groups" id="setgroups"></div>
     <div class="group" id="device-display" hidden style="margin-top:12px">
@@ -580,7 +642,7 @@ const CMD = { INFO: 1, GET: 2, SET: 3, DUMP: 4, DESC: 5, STEP_GET: 6, STEP_SET: 
   UI_STATE: 34, UI_SET: 35, UI_PALETTES: 36, FAV_GET: 37, FAV_SET: 38, COLORS: 39,
   MOTION: 64, BACKUP_LIST: 65, BACKUP_GET: 66, BACKUP_PUT: 67,
   FM6_GET: 68, FM6_PUT: 69, FM6_LIST: 70, FM6_ERASE: 71, MENU_DESC: 72, MENU_SET: 73, KIT_GET: 74, KIT_PUT: 75, TRANSPORT: 76, PROJ_NAME: 77, POOL: 78, LIST: 79, PERFORM: 80,
-  SMP_MIX: 81, LIST2: 82 };
+  SMP_MIX: 81, LIST2: 82, CAST: 83, PANEL: 84 };
 /* frames the device sends on its own (while WATCH is on); never replies */
 const PUSH = new Set([CMD.CHANGED, CMD.RELOAD, CMD.STEP_CHANGED, CMD.TRACK_CHANGED]);
 /* user preset bank: name 1..12 printable ASCII, a 16-step pattern of (note, flags 1 acc 2 slide 4 tie) */
@@ -688,7 +750,8 @@ const MENU = [
   { id: 16, name: "SCALE LEDS", names: ["OFF", "ON"], def: 0, tab: 1 },
   { id: 17, name: "SCREEN OFF", names: ["NEVER", "5 MIN", "15 MIN", "30 MIN", "60 MIN"], def: 3, tab: 0 },
   { id: 19, name: "PLAYHEAD", names: ["THEME", "LINE"], def: 0, tab: 0 },   /* ((Skiff #27) HOME's figure at the playhead, or the line) */
-  { id: 20, name: "RETURN", names: ["SNAP", "1 BEAT", "1 BAR"], def: 2, tab: 1 }];   /* ((2.0) how MOMENTARY, FX's macros, throws come back) */
+  { id: 20, name: "RETURN", names: ["SNAP", "1 BEAT", "1 BAR"], def: 2, tab: 1 },   /* ((2.0) how MOMENTARY, FX's macros, throws come back) */
+  { id: 21, name: "KEEP SENDS", names: ["OFF", "ON"], def: 0, tab: 1 }];   /* ((2.5) ON: a sound load keeps CHORUS DELAY REVERB) */
 /* (Skiff W1) a step's trig condition (core.h TC_NAME; INFO 43 01 says how many) */
 const TC_NAMES = ["--", "FILL", "!FILL", "1:2", "2:2", "1:3", "2:3", "3:3", "1:4", "2:4", "3:4", "4:4"];
 /* (Skiff W3) the DRUM-X kit: the factory's (drumx_voice.c DX_KIT_INIT: {mode, A, B}, A and B PITCH P MOD DECAY NOISE
@@ -761,6 +824,9 @@ const parse = {
                                                      4 PERFORM, (#21) 5 SMP_MIX, (2.0, #25) 6 a step's ties */
     o.song2 = 0;                                  /* (2.0, INFO 58 01 caps) bit 0: LIST2, NEW, COPY+, CHAIN, ONCE, the pool's
                                                      EMPTY and CLEAR UNUSED */
+    o.cast = 0;                                   /* (Skiff Studio, INFO 59 01 caps) bit 0: the cast (cmd 83), the Screen tab;
+                                                     (2.7) bit 1: PANEL (cmd 84, an FM-1's); bit 2: an SMK-37's cast (its
+                                                     copy: felucca_cast_smk.wasm) */
     for (const p of [8, 11]) if (o.motionMax && trailer[p] === 0x46 && trailer[p + 1] === 1) {   /* for the editor's */
       o.fm6 = { factory: trailer[p + 2], bank: trailer[p + 3], caps: 0 };                         /* PRESET / G_ENGSEL */
       if (trailer[p + 4] === 0x53 && trailer[p + 5] === 1) o.syncCaps = trailer[p + 6] & 3;
@@ -783,7 +849,8 @@ const parse = {
         o.pe0 = trailer[r + 4] | trailer[r + 5] << 7;
         r += 6;
       }
-      if (trailer[r] === 0x58 && trailer[r + 1] === 1) o.song2 = trailer[r + 2] & 127;   /* (2.0) the song's, last */
+      if (trailer[r] === 0x58 && trailer[r + 1] === 1) { o.song2 = trailer[r + 2] & 127; r += 3; }   /* (2.0) the song's */
+      if (trailer[r] === 0x59 && trailer[r + 1] === 1) o.cast = trailer[r + 2] & 127;   /* (Skiff Studio) the cast, last */
     }
     o.light = o.light || { tracks: 0, engines: 0 };   /* the tracks that may not play some engines, and those engines */
     return o;
@@ -1143,6 +1210,8 @@ function replyMatches(cmd, args, a) {
     case CMD.TRACK_MIX: case CMD.TRACK_DUMP: return a[0] === args[0];
     case CMD.WATCH: return (a[0] & 1) === (args[0] & 1);   /* bit 1: v4 firmware only */
     case CMD.TRACK_STEP: case CMD.TRACK_PARAM: return a[0] === args[0] && a[1] === args[1];
+    case CMD.CAST: return a.length === 3 && a[0] === args[0];   /* (op, on, rc; a record is 21 bytes: Link.onCast) */
+    case CMD.PANEL: return a.length === 1 && a[0] === args[0];  /* ((2.7) the op) */
     default: return true;
   }
 }
@@ -1201,10 +1270,16 @@ function apcNear(s) {
   }
   return best;
 }
+/* its Control port: the first input with an output of its name ((2.5) Windows names the second port, Notes', "MIDIIN2
+   (APC mini mk2)" and "MIDIOUT2 (APC mini mk2)": it never pairs, whichever Chrome lists first) */
 function apcPorts(access) {
   const free = (p) => p.state !== "disconnected" && APC_PORT.test(p.name || "") && !/notes/i.test(p.name);
-  const i = [...access.inputs.values()].find(free), o = i && [...access.outputs.values()].find((x) => free(x) && x.name === i.name);
-  return o ? [i, o] : null;
+  const outs = [...access.outputs.values()].filter(free);
+  for (const i of access.inputs.values()) {
+    const o = free(i) && outs.find((x) => x.name === i.name);
+    if (o) return [i, o];
+  }
+  return null;
 }
 /* what a message from it asks for (null: nothing); mode: in the drum mode, "pick" its track to pick, "lanes" one
    picked (its pads show, nothing more); "pats" the pattern mode; none the song */
@@ -1320,6 +1395,7 @@ class Link {
     this.onTimeout = opts.onTimeout || (() => {});
     this.onPush = opts.onPush || (() => {});
     this.onGap = opts.onGap || (() => {});         /* (ms) nothing was sent for that long (WATCH may have ended) */
+    this.onCast = opts.onCast || (() => {});       /* (Skiff Studio) a cast record (21 bytes) or its overflow (127) */
   }
   get idle() { return !this.cur && !this.q.length; }
   hasQueued(key) { return this.q.some((r) => r.key === key); }
@@ -1370,6 +1446,7 @@ class Link {
   receive(data) {
     const f = unframe(data);
     if (!f) return;                                  /* not ours (notes, clock, other SysEx) */
+    if (f.cmd === CMD.CAST && (f.a.length === 21 || (f.a.length === 1 && f.a[0] === 127))) { this.onCast(f.a); return; }
     if (PUSH.has(f.cmd)) { this.onPush(f); return; }
     const c = this.cur;
     if (!c || f.cmd !== c.cmd || !replyMatches(c.cmd, c.args, f.a)) { this.onUnknown(f); return; }
@@ -1922,8 +1999,10 @@ const P_LPAN = Array.from({ length: 8 }, (_, i) => 127 + i);   /* (2.0, #36, P_C
                                                    DRUM lanes' PAN, sound parameters as the lane levels */
 const P_FOLLOW = [135, 136, 137];   /* (2.1, P_COUNT 146, P_E0 138) core.h P_FOLLOW P_FMODE P_FNOTE: the chord follow, the
                                      track's */
+const P_STRUM = [138, 139];         /* (2.5, P_COUNT 148, P_E0 140) core.h P_STRUM P_SDIR: SCL > CHORD's STRUM (ms) and its
+                                     DIR, the track's */
 const trackOwn = (i, pe0) => TRACK_OWN.has(i) || (pe0 >= 83 && P_CHORD.includes(i)) || (pe0 >= 92 && i === P_DIR) ||
-  (pe0 >= 95 && P_DUCK.includes(i)) || (pe0 >= 138 && P_FOLLOW.includes(i));
+  (pe0 >= 95 && P_DUCK.includes(i)) || (pe0 >= 138 && P_FOLLOW.includes(i)) || (pe0 >= 140 && P_STRUM.includes(i));
 /* play a patch without writing flash, as UP_LOAD would load it: the sound only. SET the engine (G_ENGSEL:
    engine defaults and its first preset), then every instrument parameter that differs, except the track's
    own (TRACK_OWN). The steps are never touched. The device keeps a copy of the sound from before (SAVE held
@@ -2377,6 +2456,8 @@ function makeMockDevice(opt = {}) {
     E("TYPE", ["ROOM", "SPRING", "HALL"], 0),       /* G_RTYPE (id 24, was G_DRCH): the reverb's model ((Skiff phase 9) HALL) */
     E("MODE", ["CHORUS", "FLANGER", "PHASER"], 0), D("FEEDBACK", F.PCT, 0, 127, 0),   /* 25, 26: (Skiff phase 9) the CHORUS bus
                                                        (G_CMODE, G_CFDBK; G_DRLVL, G_DRREV before: inert since 1.0) */
+    E("DLY MODE", ["MONO", "STEREO", "PING"], 1),   /* 27: (2.5) the DELAY's MODE (G_DMODE, a new id; SKF4 holds it by GSID;
+                                                     * the unit: GLO > DELAY's PRESETS; STEREO new, MONO the older) */
   ];
   const NONE = D("-", F.INT, 0, 0, 0);
   const RATIO = [".5", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "14", "16"];
@@ -2607,13 +2688,16 @@ function makeMockDevice(opt = {}) {
   TP.push(E("SYNC", ["OFF", "4BAR", "2BAR", "1/1", "1/2", "1/4", "1/8", "8T", "1/16", "16T", "1/32"], 0),   /* 117..119: (1.3) LFO 2 */
     E("TRIG", ["NOTE", "FREE"], 0), E("POLARITY", ["BI", "UNI"], 0));
   TP.push(D("SPREAD", F.PCT, 0, 127, 0));         /* 120: (1.3) SPREAD */
-  TP.push(E("TYPE", ["OFF", "SOFT", "HARD", "FOLD", "FUZZ", "CRUSH", "PHASR", "FLANG", "CHOR"], 0),   /* 121..125: (1.3) the INSERT */
+  TP.push(E("TYPE", ["OFF", "SOFT", "HARD", "FOLD", "FUZZ", "CRUSH", "PHASR", "FLANG", "CHOR", "FILTR"], 0),   /* 121..125: (1.3)
+                                                    the INSERT; (2.5) FILTR appended */
     D("A", F.PCT, 0, 127, 64), D("B", F.PCT, 0, 127, 96), D("C", F.PCT, 0, 127, 96), D("MIX", F.PCT, 0, 127, 127));
   TP.push(E("ENV SYNC", NONOFF, 0));              /* 126: (1.3) ENV SYNC ((2.0) on LFO 2: its whole name) */
   for (let k = 0; k < 8; k++) TP.push(D("PAN", F.BIPCT, -64, 63, 0));   /* 127..134: (2.0, #36) the DRUM lanes' PAN */
   TP.push(E("FOLLOW", ["OFF", "T1", "T2", "T3", "T4", "T5", "T6"], 0), E("MODE", ["KEY", "SCALE", "FIT"], 0),
     E("NOTE", ["ROOT", "LOW", "HIGH", "LAST"], 0));   /* 135..137: (2.1) the chord follow */
-  const P_COUNT = 146, G_COUNT = 27, NSTEP = 64, P_E0 = 138, G_ENGSEL = 20, P_SLCR = 45;
+  TP.push(D("STRUM", F.INT, 0, 100, 0, null, "ms"), E("DIR", ["DOWN", "UP", "ALT"], 0));   /* 138, 139: (2.5) STRUM (0
+                                                    OFF), its DIR */
+  const P_COUNT = 148, G_COUNT = 28, NSTEP = 64, P_E0 = 140, G_ENGSEL = 20, P_SLCR = 45;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const enumOrig = (d, v) => d.fmt === F.ENUM && d.names ? aliasOf(d.names, v - d.min) + d.min : v;   /* params.c enum_orig */
   /* six tracks (firmware v3; Skiff phase 6), a synth part each; engine / preset / p / step below are the selected track's */
@@ -3550,7 +3634,7 @@ const GLYPH = {
   ui_knob: 0xEA70, symbol_keyboard: 0xEABC, symbol_effector: 0xEAB7, symbol_echo: 0xEAB5, symbol_spring: 0xEAD1,
   symbol_tuning: 0xEAA7, control_arrow_up_down: 0xEACF, symbol_grid: 0xEABA, symbol_cog: 0xEA46,
   function_filter_hpf_peak: 0xEA9E, ui_slider_vertical: 0xEA73, symbol_books: 0xEADC, control_rec_f: 0xEA09, control_stop_f: 0xEA0F, control_play_f: 0xEA07,
-  symbol_pan: 0xEA53, control_speaker_mute: 0xEAEB,
+  symbol_pan: 0xEA53, control_speaker_mute: 0xEAEB, symbol_eye: 0xEA2F,
   waveform_sine: 0xEA85, waveform_triangle_ac: 0xEA89, waveform_sawtooth_ac: 0xEA81, waveform_square: 0xEA87,
   waveform_pulse_quarter: 0xEA7F, waveform_pulse_eighth: 0xEA7B, waveform_noise_step: 0xEA79,
   waveform_noise_white: 0xEA7A, waveform_harmonic: 0xEAC5,
@@ -3636,6 +3720,8 @@ const TEXT = {
     saveFile: "ファイルに保存", loadFile: "ファイルを読み込む", projects: "プロジェクト",
     load: "読込", save: "保存", used: "使用中", empty: "空", unknown: "—",
     steps: "ステップ", reload: "再読み込み", clearSeq: "シーケンスを消去",
+    sqWhere: "T{t} · エントリー {e} · パターン {p}",
+    sqNowhere: "T{t} はまだパターンの上にいません。ここで書いたステップは、リストの最初の空きエントリーに新しいパターンとして保存されます（エントリーを編集するには、ソングタブでダブルクリック）。",
     sqRoll: "ピアノロール", sqDrum: "ドラム", sqZoom: "ズーム", sqUndo: "元に戻す", sqList: "ステップ一覧（テキスト入力）", sqStep: "ステップ",
     sqEnd: "パターンの長さ（ドラッグ）", sqFull: "1 ステップに 4 音まで", sqPick: "ノートかステップをクリックすると、ここで編集できます",
     sqHelpRoll: "空いた所をクリックで入力、ドラッグで長さ · ノートをドラッグで移動、右端で長さ · 右クリック／ダブルクリックで削除 · ⌫ 削除 · ↑↓ 移調（Shift: オクターブ）· ←→ 移動 · ⌘Z 元に戻す",
@@ -3655,7 +3741,7 @@ const TEXT = {
     noName: "（名前なし）", projNow: "現在", projChanged: "保存後に変更あり",
     projRefused: "本体が受け付けませんでした（空のスロット、またはパターンがいっぱい）", projFailed: "本体での保存に失敗しました",
     play: "再生", stop: "停止", playTitle: "再生（Shift+クリック: 頭から）", playing: "再生中", stopped: "停止中", countIn: "カウントイン",
-    sgTab: "ソング", sgHelp: "各トラックはリスト（A〜P）のエントリーを演奏し、各エントリーはプールのパターンを指します（本体の SEQ › SONG）。シーンとミュートは PERFORM と同じです。エントリーをクリックで編集、ダブルクリックで再生。停止中はすぐに、再生中は LAUNCH のタイミングで切り替わります。",
+    sgTab: "ソング", sgHelp: "各トラックはリスト（A〜P）のエントリーを演奏し、各エントリーはプールのパターンを指します（本体の SEQ › SONG）。シーンとミュートは PERFORM と同じです。エントリーをクリックすると下のボタンの対象になり、ダブルクリック（または PLAY）でトラックがそのエントリーに移ります。シーケンサータブは各トラックが今いるエントリーを編集します。停止中の NEW は、トラックを新しいエントリーに移します。停止中はすぐに、再生中は LAUNCH のタイミングで切り替わります。",
     sgLists: "リスト", sgSong: "SONG（各トラックがリストを順に進む。ONCE: 一度だけ進んで停止）", sgLaunch: "LAUNCH", sgCancel: "予約を取り消す",
     sgPattern: "パターン", sgSet: "設定", sgCopy: "新しいパターンにコピー", sgPlay: "再生", sgClear: "クリア", sgEmptyEntry: "空",
     sgNew: "新しい空のパターン", sgCopyPlus: "後ろの空きにコピー", sgEmptyIt: "空にする", sgClearUnused: "未使用の {n} 個をクリア",
@@ -3715,6 +3801,23 @@ const TEXT = {
     badEngine: "このファームウェアにないエンジンです: ", flashFail: "書き込みに失敗しました（rc {rc}）",
     installer: "インストーラー",
     tabSeq: "シーケンサー", tabTracks: "ミキサー", tabSettings: "設定",   /* ((Skiff W5) the device's MIXER) */
+    /* (Skiff Studio) the Screen tab */
+    tabScreen: "画面", scrTitle: "本体の画面",
+    scrHelp: "スタートを押すとバックアップを取ってから FM-1 を再起動し、同じ瞬間から本体の画面をここに映します。曲はそのまま残ります。「全画面」で画面いっぱいに映し、「操作」で画面のまわりに FM-1 のパネルを出して、マウス・指・キーボードで FM-1 を操作できます（FM-1 の Skiff 2.7 以降）。",
+    scrStart: "スタート", scrStop: "ストップ", scrNeedDev: "先に FM-1 を接続してください。",
+    scrFull: "全画面", scrExit: "全画面を終了", scrCtl: "操作", scrCtlNeedFw: "操作には FM-1 の Skiff 2.7 以降が必要です。",
+    scrNoPanel: "パネルの絵を読み込めませんでした。",
+    scrKeys: "キーボード：Z〜' と Q〜O で鍵盤、1〜= でボタン（FX … REC）、[ ] で OCT、↑↓ で SELECT、←→ で ALGORITHM。ボタンは Shift＋クリックか右クリックで押したままになります（SHIFT は HOME を押したまま）。",
+    scrNeedFw: "このファームウェアは画面を送れません。画面タブには Skiff 2.6 以降（FM-1）、Skiff 2.7 以降（SMK-37）が必要です。",
+    scrBackup: "FM-1 のバックアップ中… ", scrRestart: "FM-1 を再起動しています。触らないでください…",
+    scrWait: "FM-1 を待っています…", scrFollow: "FM-1 に合わせて表示しています（ずれなし）。フレームの {pct} % が完全に一致。",
+    scrOut: "FM-1 とずれました（チェック {n} / {m}）。スタートでやり直してください。",
+    scrOverflow: "FM-1 の送るデータが USB に収まらず、画面が止まりました。スタートでやり直してください。",
+    scrBehind: "表示が遅れすぎました。スタートでやり直してください。", scrLost: "FM-1 との接続が切れました。",
+    scrStopped: "止めました。スタートでもう一度映せます。", scrNoStart: "画面の送信が始まりませんでした。もう一度スタートしてください。",
+    scrNoStore: "FM-1 が曲を保存できませんでした。鍵盤から手を離して、もう一度スタートしてください。",
+    scrNoBack: "再起動のあと FM-1 が戻りませんでした。もう一度スタートしてください。",
+    scrNoCopy: "画面のコピーを読み込めませんでした: ",
     needDevice: "FM-1 を接続すると編集できます。", smpNone: "このファームウェアにはユーザーサンプルのスロットがありません。",
     bankConnect: "FM-1 を接続すると本体のユーザープリセットも扱えます。", bankNone: "このファームウェアにはユーザープリセットがありません。",
     mixer: "ミキサー", mixHelp: "本体の MIXER ページと同じ全トラック。フェーダーはレベル。パンはどのトラックも選択を変えずに書き込みます（0.8 のファームウェアでは一瞬そのトラックを選びます）。REC は本体での録音待機の表示です。",
@@ -3780,6 +3883,8 @@ const TEXT = {
     saveFile: "Save to file", loadFile: "Load file", projects: "Projects",
     load: "Load", save: "Save", used: "used", empty: "empty", unknown: "—",
     steps: "Steps", reload: "Reload", clearSeq: "Clear sequence",
+    sqWhere: "T{t} · entry {e} · pattern {p}",
+    sqNowhere: "T{t} is on no pattern yet: what you write here is kept as a new pattern in its list's first empty entry (to edit an entry, double-click it on the Song tab first).",
     sqRoll: "Piano roll", sqDrum: "Drums", sqZoom: "Zoom", sqUndo: "Undo", sqList: "Step list (text entry)", sqStep: "Step",
     sqEnd: "Pattern length (drag)", sqFull: "Up to 4 notes on a step", sqPick: "Click a note or a step to edit it here",
     sqHelpRoll: "Click empty space to draw, drag for length · drag a note to move it, its right edge to resize · right-click or double-click deletes · ⌫ deletes · ↑↓ transpose (Shift: octave) · ←→ move · ⌘Z undo",
@@ -3799,7 +3904,7 @@ const TEXT = {
     noName: "(no name)", projNow: "Now", projChanged: "changed since saved",
     projRefused: "The device refused (an empty slot, or the patterns are full)", projFailed: "Saving failed on the device",
     play: "Play", stop: "Stop", playTitle: "Play (Shift+click: from the top)", playing: "Playing", stopped: "Stopped", countIn: "Count-in",
-    sgTab: "Song", sgHelp: "Each track plays the entries of its list (A to P), each naming a pattern of the pool, as on SEQ › SONG; the scenes and mutes are PERFORM's. Click an entry to edit it, double-click to play it. Stopped, a change is at once; playing, at the LAUNCH point.",
+    sgTab: "Song", sgHelp: "Each track plays the entries of its list (A to P), each naming a pattern of the pool, as on SEQ › SONG; the scenes and mutes are PERFORM's. Click an entry to pick it for the buttons below; double-click it (or PLAY) to put the track on it. The Sequencer tab edits the entry each track is on, and NEW puts the track on its new entry while stopped. Stopped, a change is at once; playing, at the LAUNCH point.",
     sgLists: "Lists", sgSong: "SONG (each track moves through its list; ONCE: once through, then stop)", sgLaunch: "LAUNCH", sgCancel: "Cancel staged",
     sgPattern: "Pattern", sgSet: "Set", sgCopy: "Copy to a new pattern", sgPlay: "Play", sgClear: "Clear", sgEmptyEntry: "empty",
     sgNew: "New empty pattern", sgCopyPlus: "Copy into the next empty", sgEmptyIt: "Empty", sgClearUnused: "Clear {n} unused",
@@ -3859,6 +3964,23 @@ const TEXT = {
     badEngine: "This firmware has no such engine: ", flashFail: "Write failed (rc {rc})",
     installer: "Installer",
     tabSeq: "Sequencer", tabTracks: "Mixer", tabSettings: "Settings",   /* ((Skiff W5) the device's MIXER) */
+    /* (Skiff Studio) the Screen tab */
+    tabScreen: "Screen", scrTitle: "The FM-1's screen",
+    scrHelp: "Start takes a backup of your FM-1, then restarts it, so that this copy starts at the same moment and shows its screen here as it changes. Your music is kept. Full screen fills the display; Controls draws the FM-1's panel round the screen, to work the FM-1 with the mouse, a finger or the keyboard (Skiff 2.7 or later on the FM-1).",
+    scrStart: "Start", scrStop: "Stop", scrNeedDev: "Connect your FM-1 first.",
+    scrFull: "Full screen", scrExit: "Exit full screen", scrCtl: "Controls", scrCtlNeedFw: "Controls need Skiff 2.7 or later on the FM-1.",
+    scrNoPanel: "The panel's drawing didn't load.",
+    scrKeys: "Keyboard: Z–' and Q–O play the keys, 1–= the buttons (FX … REC), [ ] OCT, ↑ ↓ SELECT, ← → ALGORITHM. Shift-click or right-click holds a button down (SHIFT is HOME held).",
+    scrNeedFw: "This firmware can't send its screen. The Screen tab needs Skiff 2.6 or later on an FM-1, 2.7 or later on an SMK-37.",
+    scrBackup: "Taking a backup of your FM-1… ", scrRestart: "Restarting your FM-1. Please don't touch it…",
+    scrWait: "Waiting for your FM-1…", scrFollow: "Following your FM-1, in step. {pct} % of frames exactly alike.",
+    scrOut: "This copy is out of step with your FM-1 ({n} of {m} checks). Press Start to begin again.",
+    scrOverflow: "Your FM-1 had more to send than USB could carry, so the screen stopped. Press Start to begin again.",
+    scrBehind: "The copy fell too far behind. Press Start to begin again.", scrLost: "Your FM-1 was disconnected.",
+    scrStopped: "Stopped. Press Start to show your FM-1's screen again.", scrNoStart: "The screen didn't start. Press Start again.",
+    scrNoStore: "Your FM-1 didn't store its music. Let go of the keys and press Start again.",
+    scrNoBack: "Your FM-1 didn't come back after its restart. Press Start again.",
+    scrNoCopy: "The screen's copy didn't load: ",
     needDevice: "Connect the FM-1 to edit.", smpNone: "This firmware has no user sample slots.",
     bankConnect: "Connect the FM-1 to see its user presets too.", bankNone: "This firmware has no user presets.",
     mixer: "Mixer", mixHelp: "Every track of the device's MIXER page. The fader is the level. Pan is written to any track without changing the selection (firmware 0.8: by selecting it for a moment). REC shows a track armed for live recording on the device.",
@@ -3891,7 +4013,7 @@ $("lang").addEventListener("click", () => { lang = lang === "ja" ? "en" : "ja"; 
 
 /* ---------------------------------------------------------------- tabs --- */
 /* one panel at a time; the last one is remembered (localStorage) and in the URL hash (#sound ...) */
-const TABS = ["sound", "fm6", "sequencer", "song", "tracks", "library", "samples", "projects", "settings"];
+const TABS = ["sound", "fm6", "sequencer", "song", "tracks", "library", "samples", "projects", "screen", "settings"];
 const TAB_KEY = "felucca-editor-tab";
 const TRACK_TABS = new Set(["sound", "sequencer", "tracks"]);
 let tab = (() => {
@@ -4033,14 +4155,25 @@ function copyPlusAt(x, j) {
   for (let f = b1 + 1; f + n <= 16; f++) if (x.ent.slice(f, f + n).every((en) => !en.pat)) return f;
   return -1;
 }
-function songOp(r, kind) {
+/* then: (x, the reply) -> a request to send after it, or nothing */
+function songOp(r, kind, then = null) {
   const d = dev;
   op(async () => {
     const x = songReply(d, r, await sessionRequest(d, r, { timeout: 4000, retries: 0 }));
+    const r2 = then && then(x);
+    if (r2) await sessionRequest(d, r2, { timeout: 4000, retries: 0 });
     await readSong(d, true);
     const k = !(kind === "perf" && x.op === 5) && SG_RC[kind][x.rc];
     if (k) sayK(k);
   });
+}
+/* (2.7, #133) NEW, or SET on a track that is on no pattern, also puts the track on that entry while stopped, as a
+   double-click does: the Sequencer tab writes the entry each track is on, and steps written on no pattern are kept as a
+   new pattern in the list's first empty entry (bank.c trk_keep), which looked like an entry made on its own */
+function songPut(op, k, e, v) {
+  const d = dev, x = d.song && d.song.list && d.song.list.tracks[k];
+  const go = op === 7 || (x && x.cur < 0);
+  songOp(lreq(op, k, e, v), "list", go ? (y) => (!y.rc && !transportPlaying(d.transport || {}) ? lreq(3, k, e) : null) : null);
 }
 /* the APC mini mk2 (apcAction, apcLeds): found whenever the ports change; on it, the song is read every APC_POLL ms
    whichever tab is open, so its LEDs follow the device (the keep-alive's read, more often). SHIFT: the drum mode
@@ -4290,8 +4423,8 @@ function renderEntry(L, Q) {
   }
   box.replaceChildren(el("strong", { text: `T${k + 1} ${ENTS[e]}` }), " ",
     el("label", {}, el("span", { class: "dim", text: t("sgPattern") }), " ", sel),
-    el("button", { type: "button", onclick: () => songOp(lreq(1, k, e, +sel.value), "list") }, t("sgSet")),
-    ...(two ? [el("button", { type: "button", disabled: !!Q && Q.pats.every((p) => p.len), onclick: () => songOp(lreq(7, k, e), "list") }, t("sgNew"))] : []),
+    el("button", { type: "button", onclick: () => songPut(1, k, e, +sel.value) }, t("sgSet")),
+    ...(two ? [el("button", { type: "button", disabled: !!Q && Q.pats.every((p) => p.len), onclick: () => songPut(7, k, e) }, t("sgNew"))] : []),
     el("button", { type: "button", disabled: !en.pat || rest, onclick: () => songOp(lreq(2, k, e), "list") }, t("sgCopy")),
     ...(two ? [el("button", { type: "button", disabled: f < 0, onclick: () => songOp(lreq(8, k, e), "list") },
       t("sgCopyPlus") + (f < 0 ? "" : ` → ${ENTS[f]}${b1 > b0 ? "-" + ENTS[f + b1 - b0] : ""}`))] : []),
@@ -4395,9 +4528,12 @@ const LAYOUT = (pe0) => [
   { t: "VOICE", pages: [["LEVEL", 0, [0]], ["VOICE", 0, [37, 38, 41, 42]], ["VOICE 2", 0, [43, 44, 39, 40]],
     ...(pe0 >= 127 ? [["SPREAD", 0, [P_SPRD]]] : [])] },   /* ((1.3) the voices left and right of PAN) */
   { t: "FX", pages: [["FX", 0, [33, 34, 35, 36]], ...(pe0 >= 117 ? [["DRIVE", 0, [33, ...P_DRIVE]]] : []),
-    ...(pe0 >= 127 ? [["INSERT", 0, P_INSERT], ["INSERT 2", 0, [P_IMIX]]] : []),   /* ((1.3) the track's INSERT) */
+    ...(pe0 >= 127 ? [["INSERT", 0, P_INSERT], ["MIX", 0, [P_IMIX]]] : []),   /* ((1.3) the track's INSERT; (2.5) its MIX
+                                                    on the device: INSERT's PRESETS, INSERT 2 before) */
     ["SLICER", 0, [45, 46, 47, 48]], ...(pe0 >= 95 ? [["DUCK", 0, P_DUCK]] : []), ["DLY", 1, [4, 5, 6, 7]], ["REVERB", 1, [24, 8, 9]], ["CHORUS", 1, pe0 >= 117 ? [10, 11, 25, 26] : [10, 11]]] },   /* G_RTYPE 24: ROOM / SPRING */
-  { t: "SCALE", pages: [["SCALE", 0, [25, 26, 27, 28]], ...(pe0 >= 83 ? [["CHORD", 0, P_CHORD]] : []),   /* CHRD VOIC 81, 82 */
+  { t: "SCALE", pages: [["SCALE", 0, [25, 26, 27, 28]],
+    ...(pe0 >= 83 ? [["CHORD", 0, pe0 >= 140 ? [...P_CHORD, ...P_STRUM] : P_CHORD]] : []),   /* CHRD VOIC 81, 82; (2.5)
+                                                    STRUM DIR 138, 139 */
     ...(pe0 >= 138 ? [["FOLLOW", 0, P_FOLLOW]] : [])] },   /* ((2.1) FOLLOW MODE NOTE 135..137) */
   { t: "ARP", pages: [["ARP", 0, [17, 18, 19, 20]], ["ARP 2", 0, [21, 22, 23, 24]]] },
   { t: "SEQ PATTERN", tab: "seqgroups", pages: [["PATTERN", 0, [29, 30, 31, 32]], ...(pe0 >= 92 ? [["PLAY", 0, [P_DIR]]] : [])] },
@@ -4437,12 +4573,13 @@ async function connect() {
     let input = null, output = null, link = null;
     for (const [i, o] of pairs) {                   /* ((2.0.1, #50) one pair: as before (load asks INFO); more: the
                                                      * first that answers INFO, as the installer's handshake) */
-      const l = new Link((d) => o.send(d), {
+      const l = new Link((d) => { scrSent(d); o.send(d); }, {   /* ((Skiff Studio) the Screen tab's copy runs them too) */
         timeout: 300,
         onUnknown: (f) => console.debug("ignored reply", f),
         onTimeout: () => sayK("noreply"),
         onPush: (f) => onPush(f),
         onGap: () => { rewatch = true; },
+        onCast: (a) => scrRecord(a),
       });
       i.onmidimessage = (e) => l.receive(e.data);
       if (i.open) await i.open().catch(() => {});
@@ -4459,6 +4596,7 @@ async function connect() {
     connectedDevice = dev;
     setLabel($("connect"), t("disconnect"));
     await load(connectedDevice);
+    pnlBuild();                                    /* ((2.7) the Screen tab: an SMK-37 has no panel drawing) */
   } catch (e) {
     console.error(e);
     if (connectedDevice && connectedDevice === dev) { /* an old connection must not close a replacement */
@@ -4474,6 +4612,7 @@ async function connect() {
 
 function disconnect(reasonKey = "disconnected") {
   samplesLeave();                                   /* the Samples tab goes: so do the input and the preview */
+  scrDisconnected();                                /* ((Skiff Studio) the Screen tab: stopped, unless it restarted the unit */
   if (dev) {
     dev.link.close();
     dev.input.onmidimessage = null;
@@ -4525,6 +4664,7 @@ async function load(d) {
   try {
     /* the first frame after opening the port can be lost: a few tries */
     d.info = parse[CMD.INFO](await sessionRequest(d, req.info(), { timeout: 500, retries: 3 }));
+    scrLoaded(d);                                   /* ((Skiff Studio) back from the Screen tab's restart: the cast first) */
     $("version").textContent = d.info.version;
     const total = d.info.pcount + d.info.gcount;
     for (let i = 0; i < d.info.pcount; i++) { sayK("reading", `${i + 1}/${total}`); d.pdesc[i] = await getDescOrNull(0, i, d); }
@@ -4607,6 +4747,21 @@ async function loadSteps(d = dev) {
   }
   renderSteps();
   if (d.info.motionMax) await readMotion(d);
+  await sqWhere(d);
+}
+/* (2.7, #133) which entry and pattern the Sequencer tab writes: the selected track's place in its list (SEQ › SONG), or
+   no pattern yet (then what is written is kept as a new pattern in the list's first empty entry: bank.c trk_keep) */
+async function sqWhere(d = dev) {
+  const p = $("sqwhere");
+  p.hidden = true;
+  if (!(d.info.skiff & 8)) return;
+  const r = lreq(0, 0, 0), L = songReply(d, r, await sessionRequest(d, r));
+  (d.song = d.song || {}).list = L;
+  const k = d.sel ?? 0, x = L.tracks[k];
+  if (!x) return;
+  p.textContent = x.cur < 0 ? t("sqNowhere").replace("{t}", k + 1)
+    : t("sqWhere").replace("{t}", k + 1).replace("{e}", ENTS[x.cur]).replace("{p}", x.pat < 0 ? "–" : pat2(x.pat + 1));
+  p.hidden = false;
 }
 
 /* --------------------------------------------------------------- UI --- */
@@ -7562,6 +7717,417 @@ function downloadBytes(name, bytes) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 $("fm6export").addEventListener("click", () => downloadBytes(`${fileSlug(FM6.name(fm6v))}.syx`, FM6.singleSysex(fm6v)));
+
+/* --------------------------------------------------------- (Skiff Studio) the Screen tab --- */
+/* The FM-1's screen, drawn by Skiff itself: felucca_cast.wasm (web/emu/cast_follow.c, beside this page) follows the
+   unit's cast records (cmd 83: firmware/src/cast.c, EDITOR_PROTOCOL.md "Cast"). Start: the unit's backup into one
+   instance's flash, a fresh instance from that flash, then the cast's restart (CAST op 2: the unit stores its music and
+   restarts). The editor reconnects as for any device that comes back, and load() asks for the cast before anything
+   else (scrLoaded: WATCH, CAST op 1), within the 10 s the unit holds its splash. From then on every record goes into
+   the copy, and so does every request this page sends (scrSent): the copy runs it at the unit's R (the unit's
+   editor.c, compiled in), so what the other tabs change, the copy changes too. */
+const scr = { state: "idle", wasm: null, wasmName: "", copy: null, queue: [], seq: -1, lost: 0, log: false, pump: 0, timer: 0,
+  draws: -1, sayAt: 0, wake: null };              /* state: idle; prep (backup, restart); back (restarting); start; on */
+const scrCtx = $("scr-screen").getContext("2d"), scrImg = scrCtx.createImageData(240, 240);
+function scrSay(text, bad = false) { $("scr-status").textContent = text; $("scr-status").classList.toggle("bad", bad); }
+function scrButtons() { $("scr-start").disabled = scr.state !== "idle"; $("scr-stop").disabled = scr.state === "idle"; }
+const scrSmk = () => !!(dev && dev.info && dev.info.cast & 4);   /* (2.7) an SMK-37's cast: its copy, no panel yet */
+async function scrInstance(wasm) {
+  const { instance } = await WebAssembly.instantiate(wasm, {});
+  instance.exports._initialize();
+  return instance.exports;
+}
+/* the backup's objects into an empty copy's flash (felucca_web.c web_restore_object), and that flash out */
+async function scrFlash(wasm, file) {
+  const a = await scrInstance(wasm);
+  a.web_nor_erase();
+  a.web_boot();
+  for (const o of file.objects) {
+    const b = Uint8Array.from(atob(o.data), (c) => c.charCodeAt(0));
+    new Uint8Array(a.memory.buffer, a.web_obj_buf(), b.length).set(b);
+    const rc = a.web_restore_object(o.id, b.length);
+    if (rc !== 0) throw new Error(`${t("scrNoCopy")}${o.id} (${rc})`);
+  }
+  return new Uint8Array(a.memory.buffer, a.web_nor(), a.web_nor_size()).slice();
+}
+async function scrStart() {
+  const d = dev;
+  if (scr.state !== "idle") return;
+  if (!d || !d.info) { scrSay(t("scrNeedDev"), true); return; }
+  if (!(d.info.cast & 5)) { scrSay(t("scrNeedFw"), true); return; }   /* (bit 0 an FM-1's cast, bit 2 an SMK-37's) */
+  scr.state = "prep";
+  scrButtons();
+  pnlBuild();                                      /* (an SMK-37: the screen alone, no FM-1 panel) */
+  await op(async () => {                           /* (the editor's polling waits meanwhile) */
+    try {
+      const copyName = scrSmk() ? "felucca_cast_smk.wasm" : "felucca_cast.wasm";   /* (bit 2: an SMK-37's) */
+      if (scr.wasmName !== copyName) {
+        scr.wasm = await fetch(copyName).then((r) => {
+          if (!r.ok) throw new Error(t("scrNoCopy") + r.status);
+          return r.arrayBuffer();
+        });
+        scr.wasmName = copyName;
+      }
+      const { captureBackup } = await backupModule();
+      scrSay(t("scrBackup"));
+      const file = await captureBackup((r, o) => sessionRequest(d, r, o), d.info.version,
+        (done, total) => scrSay(t("scrBackup") + Math.floor(100 * done / Math.max(1, total)) + " %"));
+      const nor = await scrFlash(scr.wasm, file);
+      scr.copy = await scrInstance(scr.wasm);
+      scr.copy.web_nor_erase();
+      new Uint8Array(scr.copy.memory.buffer, scr.copy.web_nor(), scr.copy.web_nor_size()).set(nor);
+      scrSay(t("scrRestart"));
+      for (let n = 0; ; n++) {                     /* (rc 1: the music not stored yet) */
+        const a = await sessionRequest(d, [CMD.CAST, [2]], { timeout: 2000, retries: 0 });
+        if (a[2] === 0) break;
+        if (n >= 30) throw new Error(t("scrNoStore"));
+        await sleep(1000);
+      }
+      scr.state = "back";                          /* (the unit restarts: disconnect(), then load() calls scrLoaded) */
+      scr.timer = setTimeout(() => { if (scr.state === "back") scrStop(t("scrNoBack"), false); }, 20000);
+    } catch (e) {
+      scrStop(e.message === "closed" ? t("scrLost") : e.message || String(e), false);
+    }
+  });
+}
+/* load(), right after INFO: back from the restart, the cast before the editor's own reading */
+function scrLoaded(d) {
+  if (scr.state !== "back") return;
+  clearTimeout(scr.timer);
+  scr.state = "start";
+  scrSay(t("scrWait"));
+  (async () => {
+    try {
+      await sessionRequest(d, req.watch(3), { front: true, timeout: 500, retries: 3 });
+      Object.assign(scr, { queue: [], seq: -1, lost: 0, draws: -1, log: false });
+      const a = await sessionRequest(d, [CMD.CAST, [1]], { front: true, timeout: 1000, retries: 2 });
+      if (a[1] !== 1) throw new Error(t("scrNoStart"));
+      scr.state = "on";
+      scr.pump = setInterval(scrPump, 16);
+      requestAnimationFrame(scrDraw);
+      try { scr.wake = await navigator.wakeLock?.request("screen"); } catch (e) { /* no wake lock here */ }
+    } catch (e) {
+      scrStop(e.message === "closed" ? t("scrLost") : e.message || String(e), false);
+    }
+  })();
+}
+/* every frame this page sends (Link): from the CAST op 1 frame on, the unit takes them with the cast on, each with an
+   R: into the copy's queue, in the order sent */
+function scrSent(f) {
+  if (scr.state !== "start" && scr.state !== "on") return;
+  if (!scr.log) {
+    scr.log = f.length === 7 && f[4] === CMD.CAST && f[5] === 1;
+    return;
+  }
+  const c = scr.copy;
+  if (!c || f.length > 702) return;
+  new Uint8Array(c.memory.buffer, c.cf_req_buf(), f.length).set(f);
+  c.cf_req_push(f.length);
+}
+/* a record (its number, four words of 5 x 7 bits) or the unit's overflow (127) */
+function scrRecord(a) {
+  if (scr.state !== "start" && scr.state !== "on") return;
+  if (a.length === 1) { scrStop(t("scrOverflow"), false); return; }
+  if (scr.seq >= 0 && a[0] !== scr.seq) scr.lost++;
+  scr.seq = (a[0] + 1) & 63;
+  const w = new Uint32Array(4);
+  for (let k = 0; k < 4; k++) {
+    const p = 1 + 5 * k;
+    w[k] = (a[p] | a[p + 1] << 7 | a[p + 2] << 14 | a[p + 3] << 21 | a[p + 4] << 28) >>> 0;
+  }
+  scr.queue.push(w);
+}
+function scrPump() {
+  const c = scr.copy;
+  if (!c || scr.state !== "on") return;
+  while (scr.queue.length) {
+    const n = Math.min(64, scr.queue.length), buf = new Uint32Array(c.memory.buffer, c.cf_buf(), 256);
+    for (let i = 0; i < n; i++) buf.set(scr.queue[i], 4 * i);
+    if (c.cf_push(n) !== n) { scrStop(t("scrBehind")); return; }
+    scr.queue.splice(0, n);
+  }
+  c.cf_run();
+  const now = Date.now();
+  if (now - scr.sayAt < 500) return;
+  scr.sayAt = now;
+  const s = (k) => c.cf_stat(k), fr = s(1);
+  if (!s(0)) scrSay(t("scrWait"));
+  else if (s(4)) scrSay(t("scrOut").replace("{n}", s(4)).replace("{m}", s(3)), true);
+  else scrSay(t("scrFollow").replace("{pct}", fr ? Math.floor(100 * (fr - s(2)) / fr) : 100));
+}
+function scrDraw() {
+  const c = scr.copy;
+  if (!c || scr.state !== "on") return;
+  if (tab === "screen" && !document.hidden && c.web_screen_draws() !== scr.draws) {
+    scr.draws = c.web_screen_draws();
+    const fb = new Uint16Array(c.memory.buffer, c.web_screen(), 240 * 240), px = scrImg.data;
+    for (let i = 0; i < 240 * 240; i++) {
+      const v = fb[i], p = ((v >> 8) | (v << 8)) & 0xFFFF;   /* the panel's byte order -> RGB565 */
+      px[i * 4] = ((p >> 11) & 31) * 255 / 31;
+      px[i * 4 + 1] = ((p >> 5) & 63) * 255 / 63;
+      px[i * 4 + 2] = (p & 31) * 255 / 31;
+      px[i * 4 + 3] = 255;
+    }
+    scrCtx.putImageData(scrImg, 0, 0);
+  }
+  if (tab === "screen" && pnl.layout && c.web_lit_buttons) {   /* ((2.7) the panel's LEDs: the copy's, as its screen) */
+    const v = [c.web_lit_buttons(), c.web_lit_keys(), c.web_dim_buttons(), c.web_dim_keys(), c.web_breath_buttons(),
+      c.web_breath_keys(), c.web_mid_keys()], sig = v.join();
+    if (sig !== pnl.leds) { pnl.leds = sig; pnlLights(v); }
+  }
+  requestAnimationFrame(scrDraw);
+}
+async function scrStop(msg, tell = true, bad = true) {
+  const was = scr.state;
+  scr.state = "idle";
+  scr.log = false;
+  clearInterval(scr.pump);
+  clearTimeout(scr.timer);
+  pnlLetGo();                                      /* ((2.7) the unit lets its panel's presses go too: cast.c) */
+  scrButtons();
+  if (msg) scrSay(msg, bad);
+  try { await scr.wake?.release(); } catch (e) { /* gone already */ }
+  scr.wake = null;
+  if (tell && dev && (was === "on" || was === "start"))
+    try { await rq([CMD.CAST, [0]], { timeout: 1000, retries: 0, quiet: true }); } catch (e) { /* the unit ends it with WATCH */ }
+}
+/* disconnect(): the Screen tab stops, unless its own restart is under way */
+function scrDisconnected() {
+  if (scr.state === "prep" || scr.state === "start" || scr.state === "on") scrStop(t("scrLost"), false);
+}
+/* (2.7) the panel round the screen (panel.js's drawing, beside this page, as Try Skiff's; loaded when Controls is first
+   ticked): the FM-1's buttons, keys and knobs to press with the mouse, a finger or the keyboard. They go to the unit as
+   PANEL (cmd 84, INFO 59 01 bit 1: editor.c ed_panel), one request at a time (the unit holds one SysEx frame), and the
+   unit takes them as its own panel's, so the copy follows them as it follows the unit's own presses. The LEDs are the
+   copy's (scrDraw). MASTER is a pot on the unit: drawn, not turned from here */
+const pnl = { on: false, layout: "", knobs: [], buttons: [], keys: [], btnBy: new Map(), keyBy: new Map(), latched: 0,
+  bm: 0, km: 0, turns: [0, 0, 0, 0, 0, 0, 0], tq: 0, leds: "" };
+const pnlLive = () => scr.state === "on" && !!dev && !!dev.info && !!(dev.info.cast & 2);
+const pnlTall = () => innerHeight > innerWidth;            /* (a phone or a tablet held upright: the tall drawing) */
+function pnlSend(args) {
+  if (pnlLive()) sessionRequest(dev, [CMD.PANEL, args], { timeout: 1000, retries: 0, quiet: true }).catch(() => {});
+}
+function pnlOk() {                                         /* a press: the cast on, the firmware with PANEL */
+  if (pnlLive()) return true;
+  if (scr.state === "on") scrSay(t("scrCtlNeedFw"), true);
+  return false;
+}
+/* the buttons held (latched: Shift-click or right-click) and the keys held, sent when either changes, every change in
+   turn (a tap is a press and a let-go) */
+function pnlSync() {
+  let b = pnl.latched, k = 0;
+  for (const x of pnl.btnBy.values()) b |= 1 << x;
+  for (const x of pnl.keyBy.values()) k |= 1 << x;
+  for (const x of pnl.buttons) {
+    const on = !!(b >> x.bit & 1);
+    x.g.classList.toggle("held", on);
+    x.g.classList.toggle("latched", !!(pnl.latched >> x.bit & 1));
+    if (x.hit) x.hit.setAttribute("aria-pressed", on);
+  }
+  pnl.keys.forEach((x, i) => x.g.classList.toggle("held", !!(k >> i & 1)));
+  if (b === pnl.bm && k === pnl.km) return;
+  pnl.bm = b;
+  pnl.km = k;
+  pnlSend([0, b & 127, b >> 7 & 127, k & 127, k >> 7 & 127, k >> 14 & 127, k >> 21 & 127]);
+}
+function pnlLetGo() {
+  pnl.btnBy.clear();
+  pnl.keyBy.clear();
+  pnl.latched = pnl.bm = pnl.km = 0;
+  pnl.turns.fill(0);
+  pnlSync();
+}
+/* a knob's turns, summed and sent at most every 30 ms (each request at most 63 steps) */
+function pnlTurn(role, n) {
+  pnl.turns[role] += n;
+  if (pnl.tq) return;
+  pnl.tq = setTimeout(function flush() {
+    let more = false;
+    pnl.turns.forEach((s, r) => {
+      const v = Math.max(-63, Math.min(63, s));
+      if (!v) return;
+      pnl.turns[r] -= v;
+      more ||= !!pnl.turns[r];
+      pnlSend([1, r, v & 127]);
+    });
+    pnl.tq = more ? setTimeout(flush, 30) : 0;
+  }, 30);
+}
+function pnlLights([litB, litK, dimB, dimK, brB, brK, midK]) {
+  const { B, PLAY_GREEN } = window.PANEL;
+  for (const x of pnl.buttons) {
+    const bit = 1 << x.bit, green = x.bit === B.PLAY && litB >> PLAY_GREEN & 1;
+    x.g.classList.toggle("lit", !!(litB & bit) && !green);
+    x.g.classList.toggle("green", !!green);
+    x.g.classList.toggle("dim", !!(dimB & bit));
+    x.g.classList.toggle("breath", !!(brB & bit));
+  }
+  pnl.keys.forEach((x, i) => {
+    x.g.classList.toggle("lit", !!(litK >> i & 1));
+    x.g.classList.toggle("dim", !!(dimK >> i & 1));
+    x.g.classList.toggle("breath", !!(brK >> i & 1));
+    x.g.classList.toggle("mid", !!(midK >> i & 1));
+  });
+}
+/* the drawing (or none: the screen alone), its targets over it (the drawing takes no pointer: as Try Skiff's) */
+function pnlBuild() {
+  const dv = $("scr-dev"), cv = $("scr-screen"), svg = $("scr-svg"), smk = scrSmk();
+  for (const d of dv.querySelectorAll(".hit")) d.remove();
+  $("scr-ctl").parentElement.hidden = smk;         /* (Controls: the FM-1's panel only, for now) */
+  $("scr-keys").hidden = !pnl.on || smk;
+  if (!pnl.on || !window.PANEL || smk) {
+    svg.replaceChildren();
+    dv.classList.remove("ctl", "tall");
+    dv.style.setProperty("--ar", 1);
+    Object.assign(cv.style, { left: "", top: "", width: "", height: "" });
+    Object.assign(pnl, { layout: "", knobs: [], buttons: [], keys: [] });
+    return;
+  }
+  const P = window.PANEL.draw(svg, pnl.layout = pnlTall() ? "tall" : "side"), L = P.L, [sx, sy, ss] = P.screen;
+  dv.classList.add("ctl");
+  dv.classList.toggle("tall", pnl.layout === "tall");   /* (full screen's exit: over MASTER, not ALGORITHM) */
+  dv.style.setProperty("--ar", L.w / L.h);
+  Object.assign(cv.style, { left: `${sx / L.w * 100}%`, top: `${sy / L.h * 100}%`, width: `${ss / L.w * 100}%`, height: `${ss / L.h * 100}%` });
+  Object.assign(pnl, { knobs: P.knobs, buttons: P.buttons, keys: P.keys, leds: "" });
+  const hit = (c, cls, role) => {
+    const b = c.g.getBBox(), d = el("div", { class: "hit" + (cls ? " " + cls : ""), role, "aria-label": c.name, title: c.name, tabindex: 0 });
+    Object.assign(d.style, { left: `${b.x / L.w * 100}%`, top: `${b.y / L.h * 100}%`, width: `${b.width / L.w * 100}%`, height: `${b.height / L.h * 100}%` });
+    d.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+    d.addEventListener("contextmenu", (e) => e.preventDefault());
+    dv.append(d);
+    return (c.hit = d);
+  };
+  for (const k of pnl.knobs) if (k.role !== "master") pnlKnob(k, hit(k, "knob", "slider"));
+  for (const b of pnl.buttons) pnlButton(b, hit(b, "", "button"));
+  pnl.keys.forEach((k, i) => pnlKey(i, hit(k, "", "button")));
+  pnlSync();
+}
+function pnlButton(b, h) {
+  h.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (!pnlOk()) return;
+    if (e.shiftKey || e.button === 2 || pnl.latched >> b.bit & 1) { pnl.latched ^= 1 << b.bit; pnlSync(); return; }
+    h.setPointerCapture(e.pointerId);
+    pnl.btnBy.set("p" + e.pointerId, b.bit);
+    pnlSync();
+  });
+  h.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && !e.repeat && pnlOk()) { pnl.btnBy.set("f" + b.bit, b.bit); pnlSync(); e.preventDefault(); e.stopPropagation(); }
+  });
+  h.addEventListener("keyup", () => { if (pnl.btnBy.delete("f" + b.bit)) pnlSync(); });
+}
+function pnlKey(i, h) {
+  h.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (!pnlOk()) return;
+    h.setPointerCapture(e.pointerId);
+    pnl.keyBy.set("p" + e.pointerId, i);
+    pnlSync();
+  });
+}
+function pnlKnob(k, h) {
+  let drag = null, wheel = 0;
+  h.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (!pnlOk()) return;
+    h.setPointerCapture(e.pointerId);
+    drag = { y: e.clientY, acc: 0 };
+  });
+  h.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    drag.acc += drag.y - e.clientY;
+    drag.y = e.clientY;
+    const n = Math.trunc(drag.acc / 8);
+    if (n) { drag.acc -= n * 8; pnlTurn(k.role, n); }
+  });
+  for (const ev of ["pointerup", "pointercancel"]) h.addEventListener(ev, () => { drag = null; });
+  h.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (!pnlOk()) return;
+    const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+    if (Math.abs(dy) >= 50) { pnlTurn(k.role, dy < 0 ? 1 : -1); wheel = 0; return; }   /* a wheel's notch: one detent */
+    wheel -= dy;                                                                       /* a trackpad: by distance */
+    const n = Math.trunc(wheel / 25);
+    if (n) { wheel -= n * 25; pnlTurn(k.role, n); }
+  }, { passive: false });
+  h.addEventListener("keydown", (e) => {
+    const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+    if (d && pnlOk()) { pnlTurn(k.role, d); e.preventDefault(); e.stopPropagation(); }
+  });
+}
+for (const ev of ["pointerup", "pointercancel", "lostpointercapture"])
+  $("scr-dev").addEventListener(ev, (e) => {
+    const id = "p" + e.pointerId;
+    if (pnl.btnBy.delete(id) | pnl.keyBy.delete(id)) pnlSync();
+  });
+/* the computer's keyboard, as Try Skiff's: F3..A#4 on the Z (white) and A (black) rows, B4..G5 on Q..O by semitone, the
+   twelve buttons on the number row in the panel's order, [ ] OCT, the arrows SELECT and ALGORITHM */
+let pnlKeymap = null;
+function pnlKeys() {
+  if (pnlKeymap) return pnlKeymap;
+  const { B, EN, WHITE, ROW1, ROW2 } = window.PANEL, m = {};
+  ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash"].forEach((c, i) => { m[c] = { key: WHITE[i] }; });
+  [["KeyS", 1], ["KeyD", 3], ["KeyF", 5], ["KeyH", 8], ["KeyJ", 10], ["KeyL", 13], ["Semicolon", 15], ["Quote", 17]].forEach(([c, k]) => { m[c] = { key: k }; });
+  ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO"].forEach((c, i) => { m[c] = { key: 18 + i }; });
+  ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal"]
+    .forEach((c, i) => { m[c] = { btn: B[[...ROW1, ...ROW2][i]] }; });
+  Object.assign(m, { BracketLeft: { btn: B["OCT-"] }, BracketRight: { btn: B["OCT+"] },
+    ArrowUp: { enc: EN.SELECT, n: 1 }, ArrowDown: { enc: EN.SELECT, n: -1 }, ArrowRight: { enc: EN.ALGORITHM, n: 1 }, ArrowLeft: { enc: EN.ALGORITHM, n: -1 } });
+  return (pnlKeymap = m);
+}
+const pnlTyping = (x) => x.isContentEditable || /^(TEXTAREA|SELECT)$/.test(x.tagName) ||
+  (x.tagName === "INPUT" && !/^(checkbox|radio|button|range)$/.test(x.type)) || !!x.closest?.(".hit.knob");
+addEventListener("keydown", (e) => {
+  if (tab !== "screen" || !pnl.layout || e.metaKey || e.ctrlKey || e.altKey || pnlTyping(e.target)) return;
+  const m = pnlKeys()[e.code];
+  if (!m || !pnlLive()) return;
+  e.preventDefault();
+  if (m.enc !== undefined) { pnlTurn(m.enc, m.n); return; }
+  if (e.repeat) return;
+  if (m.key !== undefined) pnl.keyBy.set("k" + e.code, m.key);
+  else pnl.btnBy.set("k" + e.code, m.btn);
+  pnlSync();
+});
+addEventListener("keyup", (e) => {
+  const id = "k" + e.code;
+  if (pnl.btnBy.delete(id) | pnl.keyBy.delete(id)) pnlSync();
+});
+addEventListener("blur", () => {                       /* (the window let go of: its keys too) */
+  let n = 0;
+  for (const m of [pnl.btnBy, pnl.keyBy]) for (const id of [...m.keys()]) if (id[0] === "k") n += m.delete(id);
+  if (n) pnlSync();
+});
+addEventListener("resize", () => { if (pnl.layout && pnl.layout !== (pnlTall() ? "tall" : "side")) pnlBuild(); });
+function pnlLoad() {                                   /* panel.js, once */
+  return window.PANEL ? Promise.resolve() : new Promise((ok) => {
+    const s = el("script", { src: "panel.js" });
+    s.onload = ok;
+    s.onerror = () => { scrSay(t("scrNoPanel"), true); ok(); };
+    document.head.append(s);
+  });
+}
+async function pnlShow(on) {
+  pnl.on = on;
+  $("scr-ctl").checked = on;
+  $("scr-keys").hidden = !on;
+  try { localStorage.setItem("skiff-screen-controls", on ? "1" : ""); } catch (e) { /* not kept here */ }
+  if (on) await pnlLoad();
+  pnlLetGo();
+  pnlBuild();
+}
+function scrFull() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else $("scr-wrap").requestFullscreen?.().catch(() => {});
+}
+
+$("scr-start").addEventListener("click", () => scrStart());
+$("scr-stop").addEventListener("click", () => scrStop(t("scrStopped"), true, false));
+$("scr-full").addEventListener("click", scrFull);
+$("scr-exit").addEventListener("click", scrFull);
+$("scr-screen").addEventListener("click", () => { if (!pnl.layout) scrFull(); });   /* (the screen alone: a tap, as before) */
+$("scr-ctl").addEventListener("change", () => pnlShow($("scr-ctl").checked));
+try { if (localStorage.getItem("skiff-screen-controls")) pnlShow(true); } catch (e) { /* none kept */ }
+scrButtons();
 
 $("connect").addEventListener("click", () => {
   if (dev) { wantConnected = false; disconnect(); } else connect();

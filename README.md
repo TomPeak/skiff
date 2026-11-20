@@ -14,7 +14,21 @@ synths and drums, patterns and songs, live performance, and a screen that shows 
   <img src="https://img.shields.io/badge/hardware-M--VAVE%20FM--1%20%7C%20SMK--37%20Pro-555" alt="Hardware: M-VAVE FM-1 | SMK-37 Pro">
 </p>
 
-<p align="center"><b>New in 2.2:</b> USB MIDI: everything the tracks play goes out, timed with the sound (steps, the
+<p align="center"><b>New in 2.7:</b> the Screen tab goes full screen, works the FM-1 from the page (mouse, touch or
+keyboard) and comes to the SMK-37, the editor's Sequencer as a piano roll, SYNC OUT for Pocket Operators, and fixes: the phaser's squeal, the
+filter on spread voices, TRIO's and SUB BASS's clicks, the editor's stray entries ·
+<a href="https://github.com/illuminus5/skiff/releases/tag/v2.7">the release notes</a><br>
+<b>New in 2.6:</b> the Skiff Editor's Screen tab: the FM-1's screen, large, on a computer or an
+Android tablet, following the unit as you play ·
+<a href="https://github.com/illuminus5/skiff/releases/tag/v2.6">the release notes</a><br>
+<b>New in 2.5.1:</b> FX › DRIVE's CRUSH no longer cracks on chords and loud notes, as LOFI PIANO
+did ·
+<a href="https://github.com/illuminus5/skiff/releases/tag/v2.5.1">the release notes</a><br>
+<b>New in 2.5:</b> 16 voices a track, a true-stereo delay and chorus, takes played while stopped
+(Skiff finds the tempo), the delay and reverb beside their sends, a song you can follow and start from any entry, a
+FILTER insert, STRUM, and fixes from your issues ·
+<a href="https://github.com/illuminus5/skiff/releases/tag/v2.5">the release notes</a><br>
+<b>New in 2.2:</b> USB MIDI: everything the tracks play goes out, timed with the sound (steps, the
 arp, chords, ratchets), MIDI clock and Start / Stop, a track as an external synth's, knob CCs, remote buttons, Song
 Position; newer FM-1s with another flash chip save and update ·
 <a href="https://github.com/illuminus5/skiff/releases/tag/v2.2">the release notes</a><br>
@@ -76,15 +90,18 @@ Custom firmware, at your own risk; the way back to the official firmware is belo
 connect the FM-1 by USB and follow it. The same page takes the FM-1 back to the official firmware (V15 or V16: the
 version it had before Skiff), saving a complete backup of your music first.
 
-**With Python 3:** download `skiff-2.2.fwsc` from the [latest release](https://github.com/illuminus5/skiff/releases/latest)
+**With Python 3:** download `skiff-2.7.fwsc` from the [latest release](https://github.com/illuminus5/skiff/releases/latest)
 and, with this repository's `tools/` folder,
 
 ```
 pip install mido python-rtmidi
-python tools/fm1_install.py skiff-2.2.fwsc
+python tools/fm1_install.py skiff-2.7.fwsc
 ```
 
 It takes about two minutes and the FM-1 restarts on Skiff.
+
+Skiff doesn't use the FM-1's Bluetooth, so there is nothing to pair; holding HOME (the official firmware's Bluetooth
+switch) opens Skiff's MENU when you let it go.
 
 **Back to the official firmware:** the installer page above, `python tools/fm1_install.py FM-1.fwsc` with M-VAVE's
 file, or M-VAVE's own updater. An FM-1 that ran V16 before Skiff goes back to V16, one that only ever ran V15 to V15:
@@ -93,12 +110,18 @@ October 21 (Skiff 2.0.2 and later; done on a unit: back to V16, then on to Skiff
 [fm1_open repository](https://github.com/m-vave/fm1_open) as `sdk/firmware/FM-1_015.fwsc`. The official firmware
 writes its Bluetooth settings anew on its first start, so pair Bluetooth devices again if they don't connect.
 
-**On the SMK-37 Pro:** the same installer finds the keyboard and picks its build (`skiff-2.2-smk37.fwsc` for
+**On the SMK-37 Pro:** the same installer finds the keyboard and picks its build (`skiff-2.7-smk37.fwsc` for
 Python). Two steps come first: M-VAVE's firmware V016 on the keyboard, and a backup of its flash, which holds the
 keyboard's own key calibration. [SMK37.md](SMK37.md#install) has both, the way back and what to do if it does not
 start.
 
-**Updating to 2.2:** nothing is converted.
+**Updating to 2.5:** nothing is converted.
+- Every FM-1 moves to MENU › SYSTEM › CPU 2 CORES once: up to 16 voices. One whose second core doesn't start says
+  CORE 2 FAILED and stays on 1 CORE (8 voices). The SMK-37 stays on the CPU setting it has.
+- Your songs keep a mono delay (GLO › DELAY's MODE MONO) and sound as they did; a new project starts on STEREO.
+- Undo keeps 6 levels instead of 8: the room went to the voices and to takes played while stopped.
+
+**Updating from 2.1.1 or older:**
 - On Windows the FM-1 is set up once more: 2.2 lists its USB audio before its MIDI, for macOS. Pick its recording
   input again in your recorder or DAW; it may be named "Line (2- Felucca)". MIDI apps find "Felucca" as before.
 - NOTES OUT is ALL from 2.2: what the sequencer plays goes out over USB MIDI too. For only the keys you play, as
@@ -136,18 +159,18 @@ installer, Try and Learn as an app, with the FM-1 on the iPad's USB-C port (or a
 
 | | |
 | --- | --- |
-| **Tracks** | 6, each with its own engine, sound, sequence and mix; 8 voices shared between them, 12 with the second core (MENU › CPU 2 CORES, BETA, 1.3) (T5 and T6 play every engine but PHYS and GRAIN) |
+| **Tracks** | 6, each with its own engine, sound, sequence and mix; (2.5) up to 16 voices a track, 16 shared between them on two cores (MENU › CPU 2 CORES, the FM-1's default), 8 on one (T5 and T6 play every engine but PHYS and GRAIN) |
 | **Engines** | 14: ANALOG, FM6, PHASE, LOFI, SAMPLE, VOICE, TRIO, WHEEL, GRAIN, PHYS, NOISE, SLICE, DRUM, DRUM-X; 148 factory sounds, at least 8 an engine, each a BASS, LEAD, PAD, KEYS, PLUCK, DRUM or FX sound that SAVE › PRESETS lists by type; presets for all nine of DRUM's kits and eight DRUM-X kits among them; every value of an FM6 patch (6 operators, 32 algorithms) editable on the unit |
 | **Sequencer** | 64 steps a track; LENGTH 1–64; 1/1 to 1/32, triplets, 2 and 4 bars a step; chords of up to 4 notes, each note its own length (1–99 % of a step, or 1 to 128 steps, past its pattern's end on into a chain's next part) and free to overlap the next; velocity, accent, slide; per-step chance, ratchet ×1–4 or FLAM, 12 trig conditions (FILL, !FILL, 1:2 … 4:4), NUDGE (−32 to +31 64ths of a step); swing, gate; FWD, RVRS, PING or RAND; ranges of steps edited as one, copy, paste and delete |
-| **Recording** | live with overdub, FEEL (keeps where you played), count-in and click; step recording; TAKE keeps the last loop you played, after the fact |
+| **Recording** | live with overdub, FEEL (keeps where you played), count-in and click; step recording; TAKE keeps the last loop you played, after the fact; (2.5) FREE TAKE: play with the transport stopped, and Skiff finds the tempo, the bars and the first beat |
 | **Automation** | knob moves and parameter locks (hold a step, turn a knob), 64 records, listed and edited on SEQ › AUTOMATION |
 | **Patterns and songs** | a pool of 64 patterns shared by every project; each track a list of 16 entries (A–P), each a pattern played 1–16 times, or chained into the next as one long pattern; SONG walks each track down its list, round and round or once |
 | **Performance** | PERFORM: launch any track's entries and stage mutes on LOOP, BAR, BEAT or NOW; 16 scenes; throws (CUTOFF, REVERB, DELAY, DIST) that glide back, or stay; one mute a track on the black keys of GLO, FX and PERFORM (a tap latches it, held it cuts); the FX layer: repeat, reverse, filter sweeps, tape stop, freeze, harmonizer, gate, dub echo, flanger, vinyl |
-| **Sound** | per track: an envelope (in milliseconds or note values) and a second one for modulation (ENV 2), an LFO (free or synced to the tempo), one MOD page for where they go (the LFO's four depths, the envelope's three, a 4-slot modulation matrix), DIST in five types (INSERT's SOFT, HARD, FOLD, CRUSH, FUZZ) with a TONE, an INSERT (drives, a bitcrusher, phaser, flanger, chorus) with MIX, the SLICER (16 patterns), DUCK (sidechain), SPREAD (the voices across the stereo field); a drum kit's lanes tuned, their decay set and (2.0) panned one by one; arpeggiator (14 modes), chord keys (9 chords, 5 voicings), 16 scales; MONO, LEGATO, UNISON, glide |
-| **Effects** | chorus (CHORUS, FLANGER or PHASER, with FEEDBACK), delay and reverb (ROOM, SPRING or a stereo HALL) as sends |
-| **Memory** | 4 projects, 32 user sounds, 3 user sample slots; the music comes back at power-on (RESTORE LAST); 8 levels of undo |
+| **Sound** | per track: an envelope (in milliseconds or note values) and a second one for modulation (ENV 2), an LFO (free or synced to the tempo), one MOD page for where they go (the LFO's four depths, the envelope's three, a 4-slot modulation matrix), DIST in five types (INSERT's SOFT, HARD, FOLD, CRUSH, FUZZ) with a TONE, an INSERT (drives, a bitcrusher, phaser, flanger, chorus, (2.5) a filter from low-pass to high-pass) with MIX, the SLICER (16 patterns), DUCK (sidechain), SPREAD (the voices across the stereo field); a drum kit's lanes tuned, their decay set and (2.0) panned one by one; arpeggiator (14 modes), chord keys (9 chords, 5 voicings, (2.5) strummed), 16 scales; MONO, LEGATO, UNISON, glide |
+| **Effects** | chorus (CHORUS, FLANGER or PHASER, with FEEDBACK), delay and reverb (ROOM, SPRING or a stereo HALL) as sends; (2.5) the delay MONO, STEREO or PING, each track's PAN reaching it, and with STEREO or PING the chorus's CHORUS and FLANGER in stereo |
+| **Memory** | 4 projects, 32 user sounds, 3 user sample slots; the music comes back at power-on (RESTORE LAST); 6 levels of undo |
 | **Screen** | 240 × 240 colour; a graph on every page; HOME held shows every control's job; 6 themes and colours of your own; LARGE mode with tall cards |
-| **MIDI and USB** | USB MIDI in and out, TRS MIDI in; (2.2) everything the tracks play goes out on their channels (steps, arp, chords, ratchets), MIDI clock and Start / Stop out, a track as an external synth's (EXT), knob CCs out, remote buttons, a channel for the selected track, TRS-to-USB thru, Song Position in; clock from inside, USB or TRS; MIDI LEARN for any knob; Program Change; a stereo USB audio input to record the master on a computer ([MIDI implementation](#midi-implementation)) |
+| **MIDI and USB** | USB MIDI in and out, TRS MIDI in; (2.2) everything the tracks play goes out on their channels (steps, arp, chords, ratchets), MIDI clock and Start / Stop out, a track as an external synth's (EXT), knob CCs out, remote buttons ((2.5) and knobs), a channel for the selected track, TRS-to-USB thru, Song Position in; clock from inside, USB or TRS; MIDI LEARN for any knob; Program Change; a stereo USB audio input to record the master on a computer ([MIDI implementation](#midi-implementation)) |
 | **Editor** | in the browser: sounds, steps, the mixer, the song lists, scenes and pattern pool, projects, the DRUM-X kit, the settings, PLAY, STOP and REC |
 | **Audio** | 44.1 kHz |
 
@@ -314,7 +337,13 @@ display). It also keeps a library of sounds on the computer, imports
 FM6 patches from `.syx` files and saves complete backups. Its Samples tab fills the user sample slots from WAV files
 or a recording; (2.0) its Drum kit switch makes a slot a kit for DRUM: a WAV a lane, each with a level, the files'
 levels to each other kept. On 2.0 its Restore converts a backup of before (Skiff 1.x,
-Felucca) first, and lists what it converted.
+Felucca) first, and lists what it converted. (2.6) Its Screen tab shows the FM-1's screen as large as the window
+allows, on the computer or on an Android phone or tablet in Chrome with the FM-1 plugged into it: a copy of Skiff in
+the page follows the unit and draws what it draws, and the USB audio stays on. (2.7, #142) The SMK-37's too, the
+screen alone: its keys, pads, faders, wheels and pedal followed. (2.7) Its Full screen button fills the display with it; Controls draws the FM-1's panel round the screen (the screen large, the
+knobs, buttons and keys beside it; on a phone held upright, the FM-1's tall drawing), so you can work the FM-1 from
+the page: click or tap the buttons and keys, drag or scroll a knob, Shift-click or right-click to hold a button down
+(SHIFT is HOME held), or use the computer's keyboard as on Try Skiff. MASTER stays on the unit.
 
 #### The APC mini mk2
 
@@ -372,8 +401,10 @@ the lane's level at 0, the level before kept by the editor.
 
 ## Features
 
-- **Six tracks**, each its own engine and sound; 8 voices shared between them, 12 with the FM-1's second core (MENU ›
-  SYSTEM › CPU 2 CORES, BETA, 1.3). T5 and T6 play every engine but
+- **Six tracks**, each its own engine and sound. (2.5) Up to 16 voices a track and 16 shared between them with the
+  second core (MENU › SYSTEM › CPU 2 CORES, the FM-1's default), 8 on one core; the engines that cost more keep fewer
+  (GRAIN and PHYS 3, VOICE 4, FM6 6; UNISON, the drums and SLICE 8), and a new note takes the quietest fading one
+  first. T5 and T6 play every engine but
   PHYS and GRAIN. ALGORITHM selects the track on every page; HOME, PERFORM, SONG and the MIXER show all six
 - **Fourteen engines** (below), DRUM-X among them, each with at least 8 factory presets, 148 in all
 - **Sounds by type** (1.2): every factory sound is a BASS, LEAD, PAD, KEYS, PLUCK, DRUM or FX sound; SAVE › PRESETS'
@@ -405,19 +436,29 @@ the lane's level at 0, the level before kept by the editor.
   **SHIFT + OCT− / OCT+** copy and paste the selection, **SHIFT + EDIT** deletes it
   (on the drum grid copy and paste follow the LANE: a figure moved from lane to lane). SEQ › FEEL, 16 tiles, sets
   CHANCE (OFF, 1–100 %, then the trig conditions), RATCHET (×1–4, FLAM), NUDGE and TYPE (accent, slide) on every
-  selected step. A new note is 1 STEP long (PATTERN's GATE 100 %); PATTERN's PRESETS turns the direction
+  selected step. A new note is 1 STEP long (PATTERN's GATE 100 %); PATTERN's PRESETS turns the direction. (2.5) With a
+  note in the selection, NOTES' footer says SHIFT + EDIT: DELETE
 - **Patterns and songs:** 64 patterns shared by every project; each track has a list of 16 entries (A–P),
   each a pattern played REPS times; **SONG** plays each track down its list. Patterns keep themselves: no save
   needed. (2.0) Entries on **CHAIN** play and edit as one long pattern, **SONG ONCE** plays the lists once and stops,
   SONG's **NEW** and **COPY+** put a new or a copied pattern in the list in place, and an entry can carry a
-  **sound** of its own, switched in on the entry's first step
+  **sound** of its own, switched in on the entry's first step. (2.5) A song you can follow: while it plays, a line
+  along the header shows where it is, notched at the entries; SONG says BAR 9 OF 32 and its footer the entry's bars
+  (BARS 9-16); **SHIFT + PLAY** plays the song
+  from any entry, **SHIFT + EDIT** empties one, playing too
   ([Patterns, lists and the song](#patterns-lists-and-the-song))
 - **PERFORM** (hold ARP): launch any track's entries from the white keys, stage mutes on the black ones, on
   the next LOOP, BAR, BEAT or NOW (2.0: held, a black key cuts its track while it's held); 16 **scenes** (every track's
   entry and mute), SAVE held + a key stores one; throws on KNOB 1–4 (CUTOFF, REVERB, DELAY, DIST) that glide back over
   a bar (MENU › CONTROL › RETURN), or stay where they are with OCT+ (2.0)
 - **TAKE** (SHIFT + SAVE): keep the last loop you played, notes and knob moves, on the track, after the fact
-- **Undo:** SAVE held, 8 levels across the tracks (sound loads, takes, clears, tools, recording passes,
+- **FREE TAKE** (2.5): play with the transport stopped, up to 30 s, then SHIFT + SAVE. Skiff finds the tempo, the
+  length and where the 1 is, and puts the phrase into the track in place of its pattern: KNOB 1 the guess (a double or
+  half tempo offered too), KNOB 2 the bars (1, 2, 4; 8 at 1/8), KNOB 3 the note that is the first beat, KNOB 4 TEMPO SET
+  or KEEP (KEEP when other tracks have notes, or the clock is external). PLAY listens, OCT+ keeps it, OCT− puts the
+  track back as it was. The first phrase you play stopped says how, once: SHIFT + SAVE: FREE TAKE. A beat built
+  this way: the first part as a free take, the rest layered while it plays (TAKE)
+- **Undo:** SAVE held, 6 levels across the tracks (sound loads, takes, clears, tools, recording passes,
   automation edits); OCT− and OCT+ step through them while the undo box shows
 - **Parameter locks and automation:** hold a step and turn a knob to lock it; knob moves recorded live; SEQ ›
   AUTOMATION lists them all to edit, move or delete
@@ -435,7 +476,13 @@ the lane's level at 0, the level before kept by the editor.
   HALL); the FX layer (hold FX): fourteen effects on the white keys and the tracks' mutes on the black ([the keys](#the-fx-layers-keys));
   new in 1.2: DRIVE's types and TONE, the chorus's modes, HALL, and GATE, DUB, FLANGE and VINYL on the FX layer;
   new in 1.3: **FX › INSERT**, a second effect per track after DRIVE (SOFT, HARD, FOLD, FUZZ, CRUSH, PHASR, FLANG or
-  CHOR, its A, B and C named by the type, INSERT 2's MIX), and the delay's dotted times (1/8D, 1/16D, 1/4D)
+  CHOR, its A, B and C named by the type), and the delay's dotted times (1/8D, 1/16D, 1/4D);
+  new in 2.5: the delay's **MODE** (PRESETS on GLO › DELAY): MONO as before, **STEREO** (two lines, the repeats wider)
+  or **PING** (the repeats from side to side), each track's PAN reaching the delay, and then the chorus's CHORUS and
+  FLANGER in stereo too; **FX ›
+  DELAY** and **FX › REVERB**, the track's send beside the bus's own knobs (TIME, FEEDBACK, COLOR; TYPE, SIZE, DAMP);
+  INSERT on one page, PRESETS its MIX; INSERT's **FILTR**: CUTOFF, RES and SHAPE from low-pass through band-pass to
+  high-pass
 - **Quick layers:** hold FX, GLO, SEL, EDIT, ARP or SEQ for its map on the keys and knobs; SHIFT + the button,
   or the button held + HOME (1.2.1), keeps it open. The GLO layer: solos, mutes, FILL, tap tempo
 - **One mute** (2.0): the black keys F#3 to F#4 are the six tracks' MUTE in the GLO, FX and PERFORM layers alike: a
@@ -449,7 +496,8 @@ the lane's level at 0, the level before kept by the editor.
   arpeggiator on MONO, LEGATO and UNISON sounds too. **KBD HOLD** (2.0.3): ARP 2 › HOLD ON with the ARP's MODE OFF
   holds the notes you play without an arpeggio: let go and they go on sounding; the next key you press with no key
   down starts a new chord, keys pressed while others are still down join it. HOLD off, the ARP on or another track
-  ends them. **QUANTIZE SOLO** (2.1, #74): chords on the white keys, a tune on the black ones, single notes of the
+  ends them. **STRUM** (2.5, SCL › CHORD's KNOB 3 and 4): a chord's notes one after another, spread over 1 to 100
+  ms, DOWN, UP or ALT (down, then up), from the keys, MIDI and the chords in patterns alike. **QUANTIZE SOLO** (2.1, #74): chords on the white keys, a tune on the black ones, single notes of the
   same scale (see [Scale keyboard](#scale-keyboard)). **Chord follow** (2.1): a track set to FOLLOW another plays in
   that track's chords: a bass or an arp written in C moves to F as the chord track plays F (see
   [Chord follow](#chord-follow))
@@ -466,9 +514,15 @@ the lane's level at 0, the level before kept by the editor.
 - **SPREAD** (EDIT › VOICE 2, 1.3): a POLY or UNISON track's voices left and right of PAN in turn
 - **Presets and projects:** factory presets, 32 user sounds and 4 projects, named on the device; SAVE › PROJECT
   loads, saves, renames and deletes them, and NEW on an empty slot starts a blank project (1.2.1); the music comes back at
-  power-on (RESTORE LAST, an autosave of its own)
+  power-on (RESTORE LAST, an autosave of its own). (2.5) SAVE › PROJECT's KNOB 3: LOAD, NEW (on any slot), CLEAR SONG
+  (every list emptied, the patterns kept; SAVE held puts the song back) and CLEAR TRACKS (every track's steps, the
+  sounds kept, each pattern kept in SAVE › PATTERNS to load back); the two CLEARs ask first. MENU › CONTROL › KEEP SENDS ON: a
+  new sound keeps the track's CHORUS, DELAY and REVERB
 - **Screen and LEDs:** the BLOCKS look in Barlow Condensed with Fukiai icons; six themes; MENU › LARGE for tall
-  cards; messages say the way out; idle buttons glow, what can be pressed breathes, never blinks
+  cards ((2.5, #97) HOME's six sounds named under them); messages say the way out; idle buttons glow, what can be
+  pressed breathes, never blinks. (2.5) Where PRESETS does something special, a card of its own says what (DELAY's
+  MODE, PATTERN's DIR, INSERT's MIX); HOME tapped shows each theme's own view of the voices (QUARK's particles, SKIFF's
+  sea and boat, CRYPT's creatures)
 - **USB and MIDI:** class-compliant MIDI in and out, TRS MIDI in, a stereo USB audio input to record the
   master on a computer; channels 1–6 play tracks 1–6 (MENU › MIDI IN CH1-6), and (1.3) each track can listen on a
   channel of its own (MENU › MIDI › T1–T6 CHANNEL); clock from internal, USB or TRS. (2.2) **NOTES OUT ALL**: every note
@@ -477,7 +531,7 @@ the lane's level at 0, the level before kept by the editor.
   nothing and what MIDI IN plays is never sent back. **CLOCK OUT**: MIDI clock and Start / Stop from the internal
   clock, on the sequencer's own grid, while stopped too. A track set to **CH n EXT** plays only through MIDI (an
   external synth's track: no sound or voices of its own; its locks and automation go out as CCs). **CC OUT**: the knobs
-  send their CCs (the map below). **REMOTE**: a channel on which CC 102–115 press the 14 buttons. **AUTO CHANNEL**: a
+  send their CCs (the map below). **REMOTE**: a channel on which CC 102–115 press the 14 buttons ((2.5) and CC 116–119, 85–87 turn the knobs). **AUTO CHANNEL**: a
   channel that plays the selected track. **THRU**: what the TRS jack brings in goes out over USB. **Song Position**
   from a DAW puts the patterns on the right step. See [MIDI implementation](#midi-implementation). **MIDI LEARN** (1.3): MENU › MIDI
   › MIDI LEARN, turn a knob, send a CC: the controller sets that parameter, up to 10 of them; **Program Change** (1.3)
@@ -522,6 +576,10 @@ The notes live in **patterns**, and a project says which ones each track plays:
   lengths move on at different times. **SONG OFF:** each track loops its entry. GLO + PLAY starts every track from
   its first entry. **SONG ONCE** (2.0): PLAY starts every track from its first entry, each plays its list once, then
   goes quiet, and when the last one ends the transport stops.
+- **From an entry, and emptying one** (2.5): on SEQ › SONG, **SHIFT + PLAY** plays the song from the entry KNOB 1 is
+  on, stopped or playing: every track starts where its list is at that point, part-way into a pattern if it is in
+  the middle of one. **SHIFT + EDIT** empties that entry at once, playing too, without a dialog: its pattern stays
+  in SAVE › PATTERNS, and SAVE held brings the entry back (KNOB 2's CLEAR still asks, and may erase the pattern).
 - **A chain** (2.0): KNOB 3 below 1x is CHAIN, the entry going on into the next. Entries on CHAIN with the one they
   end on are one pattern wherever the track plays them, each part with its own LENGTH, DIV and SWING: the header names
   the chain and the part (A-B · 02), NOTES counts the steps on through the parts (NOTES 71), and a note can go on from
@@ -543,17 +601,21 @@ by the keys, with what each key is in Skiff.
   the MENU opens
 - Hold FX, GLO, SEL, EDIT, ARP or SEQ for its layer; **SHIFT + the button** (or the button held, then HOME) keeps it open (the header says
   LOCKED), the button closes it. A locked FX layer latches its effects
-- **SAVE** tapped: its pages (PRESETS, USER, PATTERNS, PROJECT); **held**: undo. **SHIFT + SAVE**: TAKE
+- **SAVE** tapped: its pages (PRESETS, USER, PATTERNS, PROJECT); **held**: undo. **SHIFT + SAVE**: TAKE, or
+  (2.5) stopped, after playing: FREE TAKE
 - **REC** arms the selected track the moment it is pressed; on an armed track it disarms every track (its light is on
   while any track is armed). **SHIFT + REC** opens the REC layer:
   F3 held clears the track's sequence, then CLICK, COUNT-IN, CLICK LEVEL, FEEL
 - **EDIT** opens the EDIT pages everywhere; on NOTES with REC armed it clears the cursor step
-- **SELECT** turns the pages of a family; **GLO + SELECT** sets the tempo (MENU › BPM LOCK, on by default)
+- **SELECT** turns the pages of a family (in the MENU, its tabs); **GLO + SELECT** sets the tempo (MENU › BPM LOCK,
+  on by default)
 - **PRESETS** changes the sound; on NOTES and FEEL it moves the step cursor, on PATTERN it turns the direction, on
-  lists it picks. With SAVE › PRESETS' LIST on a type (BASS, PAD ..) it steps through that type only
+  lists it picks, (2.5) on DELAY it turns the MODE and on INSERT the MIX (a card says so). With SAVE › PRESETS' LIST
+  on a type (BASS, PAD ..) it steps through that type only
 - On NOTES and FEEL, **SHIFT + PRESETS** stretches the selection over a range of steps, **SHIFT + OCT− / OCT+** copy
   and paste it, **SHIFT + EDIT** deletes it; with REC off **SHIFT + a key** picks its note in the selection, and
   (2.2) a key writes an empty cursor step, or on one with notes adds its note or deletes its own, playing too
+- (2.5) On SEQ › SONG, **SHIFT + PLAY** plays the song from the entry KNOB 1 is on, **SHIFT + EDIT** empties it
 - On action pages and in dialogs, **OCT+** does it and **OCT−** goes back
 - Hold a step on SEQ › NOTES (on the drum grid its white key; on the piano roll the step you are entering, REC armed
   and stopped, or (2.2) REC off on an empty step) and turn KNOB 1–4 to lock those parameters on that step: the four
@@ -621,7 +683,8 @@ In the order the device lists them:
   before. (2.0) KIT **USR1**–**USR3** plays a user sample slot as the kit: each lane its sample on its key (KICK
   C2, SNARE D2, CLAP D#2, CL HAT F#2, OP HAT A#2, TOM A2, RIM C#2, BELL G#3), with the lanes' level, tune, decay and pan,
   the open hat cut by the closed one; a lane with no sample is silent. The editor's Samples tab builds such a slot
-  (Drum kit: a WAV a lane)
+  (Drum kit: a WAV a lane). **Your own kits are not among the PRESETS:** on a DRUM track tap EDIT, and on its first
+  page, KIT, turn KNOB 1 past PERC to USR1, USR2 or USR3
 - **DRUM-X**: a synthesized 8-sound kit from [JIANT FM](https://github.com/juanjiant-bit/JIANT), after the idea of
   Sonic Charge's Microtonic: each sound an oscillator (SIN, FM, MTL, BEL) with a pitch envelope and filtered noise,
   two patches A and B with MORPH between them; one kit a project, edited on EDIT › SOUND, a sound at a time. Its
@@ -658,11 +721,11 @@ and BREAK 1.1's own break.
 ## Menu
 
 Hold **HOME** and let it go for the menu. It is in five tabs: **DISPLAY** (THEME, PLAYHEAD, LARGE, ANIM, LEDS,
-SCREEN OFF, HINTS), **CONTROL** (HOLD, KNOB ACCEL, BPM LOCK, SCALE LEDS, STEP PREVIEW, RETURN), **AUDIO** (SPEAKER EQ,
-USB LEVEL, CLICK, CLICK LEVEL, COUNT-IN, TUNE), **SYSTEM** (RESTORE LAST, CPU, CPU CLOCK, HARDWARE CALIBRATION, RESET
+SCREEN OFF, HINTS), **CONTROL** (HOLD, KNOB ACCEL, BPM LOCK, SCALE LEDS, STEP PREVIEW, RETURN, KEEP SENDS), **AUDIO** (SPEAKER EQ,
+USB LEVEL, CLICK, CLICK LEVEL, COUNT-IN, TUNE, SYNC OUT, SYNC PPQN, SYNC INVERT), **SYSTEM** (RESTORE LAST, CPU, CPU CLOCK, HARDWARE CALIBRATION, RESET
 SETTINGS, ABOUT) and **MIDI** (CLOCK, CLOCK OUT, MIDI IN, AUTO CHANNEL, T1–T6 CHANNEL, NOTES OUT, CC OUT, THRU, REMOTE,
 MIDI LEARN, LEARN CLEAR); a tab of more than six rows scrolls.
-ALGORITHM moves between the tabs and PRESETS through the rows of one; any of KNOB 1–4, or OCT+ / OCT−,
+ALGORITHM or SELECT moves between the tabs and PRESETS through the rows of one; any of KNOB 1–4, or OCT+ / OCT−,
 changes the value (OCT+ opens HARDWARE CALIBRATION and ABOUT, starts MIDI LEARN and clears what it learned); press
 HOME to close the menu. RESET SETTINGS puts
 every setting back as a new unit has it. The web editor's Settings tab reads and changes them too.
@@ -679,11 +742,13 @@ every setting back as a new unit has it. The web editor's Settings tab reads and
 - **PLAYHEAD** (1.4): THEME (default) or LINE: HOME's playhead a plain line, without the theme's torch, car or
   collision
 - **LARGE:** OFF or ON: on HOME and the value pages the four knob cards grow tall, marked K1–K4, with
-  larger labels and values about twice the size; the graph below becomes a strip. Lists, the piano roll,
+  larger labels and values about twice the size; the graph below becomes a strip (2.5, #97: on HOME the six tracks'
+  sounds, two columns; HOME tapped: the scope). Lists, the piano roll,
   the drum grid and the quick layers keep their layout with larger labels
 - **ANIM:** ON or OFF; OFF shows every change at once, without rolling digits, a gliding piano roll or
   the LED sweep at power-on
-- **LEDS:** OFF (no glow), DIM LO, DIM HI (default) or INV (the idle LEDs lit, the active ones dark).
+- **LEDS:** OFF (no glow), DIM LO, DIM HI (default) or INV (the idle LEDs lit, the active ones dark; (2.7) REC
+  breathes while a track is armed).
   What can be pressed breathes up to about 60 % of a lit LED, about 30 % with DIM LO
 - **SCREEN OFF:** NEVER, 5 MIN, 15 MIN, 30 MIN (default) or 60 MIN: after that long with no button, key or
   knob touched, the screen and its backlight go off; the sound, the sequencer, MIDI and USB go on. The next
@@ -726,8 +791,10 @@ every setting back as a new unit has it. The web editor's Settings tab reads and
   brings in goes out of its TRS jack.) Never from USB back to USB
 - **REMOTE** (MIDI, 2.2): OFF (default) or CH 1–16: on that channel CC 102–115 press the 14 buttons (see MIDI
   implementation), 64 and up held, below let go, as on the panel (taps, holds, layers, a button with a key); the
-  same numbers as Sloop's REMOTE, so a controller template made for it works. Other messages on that channel act as
-  usual
+  same numbers as Sloop's REMOTE, so a controller template made for it works. (2.5) CC 116–119 turn KNOB 1–4, CC 85
+  ALGORITHM, 86 PRESETS, 87 SELECT: relative, as an endless encoder's "two's complement" mode sends (1–63: that many
+  clicks right; 127–65: left), as the panel's knobs turn (every page, acceleration, MIDI LEARN). Other messages on that
+  channel act as usual
 - **MIDI LEARN** (MIDI, 1.3): OCT+ turns it on and closes the menu. Turn a knob (on HOME, a sound page, the MIXER, the
   GLO layer's levels): the footer says what it picked; send a CC from your controller and it is learned to that
   parameter of that track. Turn the next knob for another; OCT− clears the picked one's CC, OCT+ is done. Up to 10 CCs,
@@ -737,12 +804,15 @@ every setting back as a new unit has it. The web editor's Settings tab reads and
   sounds the step it lands on, when stopped
 - **RETURN** (CONTROL, 2.0): SNAP, 1 BEAT or 1 BAR (default): how MOMENTARY's values (LFO held + a knob), the FX
   layer's macros and PERFORM's throws come back, at once or in a line over that time; OCT+ keeps them instead
-- **CPU** (SYSTEM): **1 CORE** (default) or **2 CORES (BETA)**, then how busy the audio is. 2 CORES takes effect
-  at the next power-on: stop playing first (the row says STOP while the music plays, since settings are saved
-  stopped), then restart when it says RESTART: the FM-1's second core renders some of the tracks of
-  every block, the sound bit for bit the same, and up to 12 voices sound at once instead of 8. If the second core
-  misreads or stops answering (some units do), the FM-1 goes on with one core, says CORE 2 FAILED and sets the row
-  back to 1 CORE
+- **KEEP SENDS** (CONTROL, 2.5): OFF (default) or ON: a new sound (PRESETS, a user preset, a song entry's sound)
+  keeps the track's CHORUS, DELAY and REVERB sends, as it keeps LEVEL and PAN; OFF, the sound brings its own
+- **CPU** (SYSTEM): **1 CORE** or **2 CORES** (the FM-1's default since 2.5, which moves every FM-1 to it once; the
+  SMK-37's stays 1 CORE), then how busy the audio is. A change takes effect at the next power-on: stop playing first
+  (the row says STOP while the music plays, since settings are saved stopped), then restart when it says RESTART.
+  With 2 CORES the second core renders some of the tracks of every block, the sound bit for bit the same, and up to
+  16 voices sound at once instead of 8 (12 before 2.5). If the second core misreads or stops answering (some units
+  do), the FM-1 goes on with one core, says CORE 2 FAILED and sets the row back to 1 CORE. (2.7) After a crash or a
+  hang on 2 CORES it restarts on 1 CORE and says the same; set 2 CORES again to try it once more
 - **CPU CLOCK** (SYSTEM, 1.3.1): **360 MHZ** (default: what the FM-1's boot sets) or **320 MHZ**, the clock JieLi rates
   the chip for (curist's switch, no voltage changed). It takes effect at the next power-on, as CPU does (STOP, then
   RESTART). 320 is about 11 % slower: the same music shows a higher CPU. A unit whose clock is set up differently
@@ -760,7 +830,17 @@ every setting back as a new unit has it. The web editor's Settings tab reads and
   bar's first beat higher. **CLICK LEVEL:** LOW, MID (default) or HIGH; MASTER sets it too
 - **COUNT-IN:** OFF (default), 1 BAR or 2 BARS: with a track armed, PLAY counts in first (clicking even with
   CLICK OFF), and a note played in the last half beat lands on step 1. Not with an external clock
-- **USB SERIAL** (2.0: only in a build from source without `--release`, see [BUILDING.md](BUILDING.md)): the serial
+- **SYNC OUT:** NO SYNC: STEREO (default), L SYNC: MONO/SYNC or R SYNC: SYNC/MONO: an analog sync out of the
+  headphone / line out for gear that follows pulses on its audio input. L SYNC puts the pulses on the left and the music,
+  summed to mono, on the right: a Teenage Engineering Pocket Operator in **SY4** (or SY5) follows it. R SYNC is the
+  other way round. The pulses follow the sequencer (the internal clock or CLOCK USB / TRS), the first with step 1, and
+  only while it plays, so the PO starts and stops with Skiff; 20 ms each at full level (shorter at a high PPQN),
+  whatever MASTER is, and just below zero between them, PocketSync's shape (as JAN3000 found it). USB audio stays
+  stereo. **SYNC PPQN:** 1–24 pulses a quarter note, 2 by default (the Pocket Operator's and the Volca's).
+  **SYNC INVERT:** ON (default) or OFF: the FM-1's headphone output turns the signal upside down, so with ON the PO
+  gets the pulse the right way up; OFF for an output that doesn't (the browser emulator through a computer). All three
+  are the unit's, as CLOCK OUT, so loading a project never changes them
+- **USB SERIAL** (only in a build from source with `--console`, see [BUILDING.md](BUILDING.md)): the serial
   console, a developer tool. A release has none, so the FM-1 is a plain audio + MIDI device and macOS 13–15 see its
   USB audio input
 - **RESTORE LAST:** ON (default) or OFF. ON, the FM-1 starts with the music you left (the header says
@@ -787,6 +867,7 @@ says otherwise.
 | CC64 | sustain | — |
 | CC120, CC121, CC123 | sound off, reset controllers, notes off | — |
 | CC 102–115 (REMOTE's channel) | press the 14 buttons | — |
+| CC 116–119, 85–87 (REMOTE's channel) | turn KNOB 1–4, ALGORITHM, PRESETS, SELECT (relative) | — |
 | Program Change | loads the track's *n*th preset of its engine | — |
 | Clock, Start, Continue, Stop | with CLOCK USB or TRS, from that source | CLOCK OUT ON, CLOCK INT: 24 a beat (stopped too), Start, Stop |
 | Song Position | with CLOCK USB or TRS: Continue starts there (playing: at once) | — |
@@ -809,6 +890,12 @@ says otherwise.
 | CC | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114 | 115 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Button | FX | SEL | ENV | LFO | EDIT | GLO | HOME | SAVE | ARP | SEQ | PLAY | REC | OCT− | OCT+ |
+
+(2.5) Its knobs (relative, two's complement: 1–63 that many clicks right, 127–65 left; 0 and 64 nothing):
+
+| CC | 116 | 117 | 118 | 119 | 85 | 86 | 87 |
+|---|---|---|---|---|---|---|---|
+| Knob | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | ALGORITHM | PRESETS | SELECT |
 
 With a DAW: record the FM-1's port on MIDI tracks (one per channel) while NOTES OUT is ALL; to play the FM-1 back from
 the DAW, stop its own sequencer or mute its tracks (the notes would double), and CLOCK USB makes it follow the DAW's
@@ -891,7 +978,7 @@ On the SMK-37: [SMK37.md](SMK37.md#if-it-does-not-start).
 **The screen says UPDATE MODE, or stays black while a computer sees a USB MIDI device named "Felucca
 Update":** an install was cut off, and the FM-1 waits in Skiff's update loader at every power-on. Nothing is
 lost. Connect it by USB and run the [Skiff installer](https://illuminus5.github.io/skiff/webapp/installer/) again
-(or `python tools/fm1_install.py skiff-2.2.fwsc`): it finishes the install. If the installer can't find it, plug
+(or `python tools/fm1_install.py skiff-2.7.fwsc`): it finishes the install. If the installer can't find it, plug
 the FM-1 straight into the computer: a USB hub or USB-sharing software can lose it when it switches to update mode.
 M-VAVE's own updater does not see the FM-1 in this state. (Since 1.3.2 the loader says UPDATE MODE on the screen;
 one an older Skiff left there keeps it black.)
