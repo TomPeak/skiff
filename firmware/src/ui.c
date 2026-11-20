@@ -2413,8 +2413,10 @@ static const char *song_act_name(void)
         b[12] = (char)('A' + n), b[14] = (char)('A' + n + b1 - b0);
         return b;
     }
+    n = id != PAT_NONE ? pool_alloc_after(id) : NPAT;
+    if (n < NPAT && p <= NPAT && !pool_used(p - 1u))   /* ((the user's pick) a free number: the copy into it) */
+        n = p - 1u, p = SPICK_COPY;
     if (p == SPICK_COPY || p == SPICK_COPYP) {
-        n = id != PAT_NONE ? pool_alloc_after(id) : NPAT;
         str_cpy(b, "COPY ", sizeof b);
         pat_num(b + 5, id);
         if (n < NPAT) {

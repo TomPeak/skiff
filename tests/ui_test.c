@@ -9660,12 +9660,13 @@ static int test_song_page(void)
     return bad;
 }
 
-/* (the user's pick) SONG's KNOB 2 has the free numbers too (dim): OCT+ puts a new empty pattern into the one picked;
+/* (the user's pick) SONG's KNOB 2 has the free numbers too (dim): OCT+ puts a new empty pattern into the one picked
+ * (an entry with a pattern: a copy of it);
  * a DRUM or DRUM-X track's NEW takes the first free in the last 16 (49 .. 64), another track's the first from 01 */
 static int test_song_free(void)
 {
     int bad = 0, ok;
-    uint32_t k, f, d, e0;
+    uint32_t k, f, d, e0, a, g;
     char w[16];
     ui_power_on();
     lists_clear();
@@ -9687,6 +9688,20 @@ static int test_song_free(void)
     pat_num(w + 9, f);
     ok &= ent_pat(k, 1) == f && pool_used(f) && pool_len(f) == (uint32_t)TSEL->p[P_SLEN] && msg_is(w) && !song_pick();
     bad += check("(the user's pick) SONG's KNOB 2: a free number (dim), OCT+ a new empty pattern in it", ok);
+    a = ent_pat(k, 0);
+    g = pool_alloc(NTRK);
+    turn(EN_K1, -1);                                 /* (A: its pattern copied into a free number picked) */
+    sg.pick = g + 1u;
+    sg.pick_at = 1u + k * 16u;
+    str_cpy(w, "COPY ", sizeof w);
+    pat_num(w + 5, a);
+    str_cpy(w + 7, " TO ", sizeof w - 7u);
+    pat_num(w + 11, g);
+    ok = sg.entry == 0u && a < NPAT && g < NPAT && str_eq(song_act_name(), w) && act_ready();
+    press(B_OCTUP);
+    ok &= ent_pat(k, 0) == g && pool_used(g) && pool_used(a) && pool_len(g) == pool_len(a) && !song_pick();
+    bad += check("  on an entry with a pattern: OCT+ copies it into the free number", ok);
+    turn(EN_K1, 1);
     set_engine_of(TSEL, ENGI_DRUM);
     d = pool_alloc(k);
     ok = d >= NPAT - PAT_DRUMS && d < NPAT && pat_free(d) && pool_alloc(NTRK) < NPAT - PAT_DRUMS;
