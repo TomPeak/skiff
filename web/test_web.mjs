@@ -1185,11 +1185,12 @@ async function editorLists() {
   const t2 = E.apcNear("#22C3B4");
   m = E.apcPatLeds(pool, plist, 0, true, [t1, t2]);
   ok(led(56) === `${A.FULL},${A.GREEN}` && led(58) === `${A.BLINK},${A.GREEN}` && led(60) === `${A.KEPT},${t2}` &&
-     led(57) === `${A.KEPT},${A.RED}` && led(59) === `${A.REST},${A.RED}` && led(61) === `${A.FAINT},${A.QUAD[1]}`,
-     "apc pats: the track's pattern green, its staged one blinking, another track's 50 % of its colour; no list's its quarter's colour (unused 25 %), empty 10 %");
-  ok(led(63) === `${A.FAINT},${A.QUAD[1]}` && led(0) === `${A.FAINT},${A.QUAD[2]}` && led(31) === `${A.FAINT},${A.QUAD[3]}` &&
-     led(35) === `${A.FAINT},${A.QUAD[0]}` && led(36) === `${A.FAINT},${A.QUAD[1]}`,
-     "apc pats: the 4x4 quarters: 08 yellow, 57 sky, 40 violet; 28 red, 29 yellow");
+     led(57) === `${A.KEPT},${A.RED}` && led(59) === `${A.REST},${A.RED}` && led(61) === `${A.FAINT},${A.BAND[0]}`,
+     "apc pats: the track's pattern green, its staged one blinking, another track's 50 % of its colour; no list's its band's colour (unused 25 %), empty 10 %");
+  ok(led(63) === `${A.FAINT},${A.BAND[0]}` && led(40) === `${A.FAINT},${A.BAND[1]}` && led(47) === `${A.FAINT},${A.BAND[1]}` &&
+     led(24) === `${A.FAINT},${A.BAND[2]}` && led(23) === `${A.FAINT},${A.BAND[2]}` && led(8) === `${A.FAINT},${A.BAND[3]}` &&
+     led(0) === `${A.FAINT},${A.BAND[3]}`,
+     "apc pats: the two-row bands: 08 red, 17 and 32 yellow, 33 and 48 sky, 49 and 57 violet");
   ok(m.get(A.MUTE)[1] === 1 && [1, 2, 3, 4, 5].every((k) => !m.get(A.MUTE + k)[1]) && m.get(A.PLAY)[1] === 1 && !m.has(A.DRUM),
      "apc pats: the picked track's button lit; PLAY");
   m = E.apcPatLeds(pool, plist, 1, false, [t1, t2]);

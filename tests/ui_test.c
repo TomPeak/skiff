@@ -289,7 +289,7 @@ static void user_rename(void) { turn(EN_K3, 2); press(B_OCTUP); }      /* (U2) U
 static void proj_rename(void) { turn(EN_K2, 2); press(B_OCTUP); }      /* (U2) PROJECT: KNOB 2 past DELETE (1.2.1), NAME */
 static void song_pick_clear(void)                  /* (U2) SONG: KNOB 2 to CLEAR ((2.0, #30) its end but SOUND and NO */
 {                                                  /* SOUND), OCT+ */
-    turn(EN_K2, 40);
+    turn(EN_K2, 99);
     turn(EN_K2, lists.snd[song.sel % NTRK][sg.entry % NENT][0] ? -2 : -1);
     press(B_OCTUP);
 }
@@ -8071,7 +8071,7 @@ static int test_way_back_2a(void)
     bad += check("  RETURN SNAP: back at once; 1 BEAT: over a beat", ok && *p0 == v0 && !mom.n);
     ui_power_on();
     btn_down(B_FX); frame();
-    turn(EN_K2, 40);                                    /* CRUSH */
+    turn(EN_K2, 99);                                    /* CRUSH */
     ok = perf_k[1] > 0 && mom_held(1) == 1u && ui.layer == LAYER_FX;
     btn_up(B_FX); frame();
     ok &= perf_k[1] > 0 && !mom_held(1);                /* (on its way back) */
@@ -9317,7 +9317,7 @@ static int test_pool(void)
     ok &= msg_is("CLEARED 2 PATTERNS") && !pool_used(c) && !pool_used(d) && pool_used(a) && !pool_unused();
     press(B_OCTUP);
     bad += check("  KNOB 4 CLEAR UNUSED: 02 and 03 after its dialog; again: NOTHING UNUSED", ok && msg_is("NOTHING UNUSED"));
-    ok = pool_used(0u) && !pool_used(1u) && !pool_used(2u) && pool_used(3u) && pool_alloc() == 1u &&
+    ok = pool_used(0u) && !pool_used(1u) && !pool_used(2u) && pool_used(3u) && pool_alloc(NTRK) == 1u &&
          pool_alloc_after(3u) == 4u && pool_alloc_after(0u) == 1u && pool_alloc_after(NPAT - 1u) == 1u;
     bad += check("  (2.0, #34) a copy's number: the first free after its original's (04's copy 05, though 02 is free; "
                  "round from 64)", ok);
@@ -9511,7 +9511,7 @@ static int test_song_page(void)
     press(B_OCTUP);
     ok &= ent_pat(song.sel, 2) == a && !song_pick() && msg_is("T1 C SET 01");
     bad += check("  KNOB 2 a pattern for C (the used ones), OCT+ puts it in", ok);
-    turn(EN_K2, 2);                                  /* 01 -> 02 -> ((2.0) NEW: a used entry's after the patterns) */
+    turn(EN_K2, 64);                                 /* 01 -> 02 .. 64 -> ((2.0) NEW: a used entry's after the patterns) */
     ok = song_pick() == SPICK_NEW && str_eq(song_act_name(), "NEW 03");
     turn(EN_K2, 1);                                  /* -> COPY */
     ok &= song_pick() == SPICK_COPY && str_eq(song_act_name(), "COPY 01 TO 03");
@@ -9524,7 +9524,7 @@ static int test_song_page(void)
     song.playing = 1;
     press(B_OCTUP);                                  /* playing: C staged */
     ok = bank_next(song.sel) == 2u && msg_is("T1 C AT LOOP END");
-    turn(EN_K2, 40);                                 /* (U2) KNOB 2's last but ((2.0, #30) SOUND): CLEAR (was EDIT) */
+    turn(EN_K2, 99);                                 /* (U2) KNOB 2's last but ((2.0, #30) SOUND): CLEAR (was EDIT) */
     turn(EN_K2, -1);
     ok &= song_pick() == SPICK_CLEAR && str_eq(song_act_name(), "CLEAR");
     press(B_OCTUP);
@@ -9596,7 +9596,7 @@ static int test_song_page(void)
                  "1 STEP, not the track's 50 %) in it", ok);
     lists.ent[song.sel][3][1] = 1;                   /* (#33) COPY+ on D (01 x2): E is 03, so to F */
     turn(EN_K1, -1);
-    turn(EN_K2, 3);                                  /* 01 -> 02 -> 03 -> NEW */
+    turn(EN_K2, 64);                                 /* 01 -> 02 .. 64 -> NEW */
     ok = song_pick() == SPICK_NEW;
     turn(EN_K2, 2);                                  /* -> COPY -> COPY+ */
     ok &= song_pick() == SPICK_COPYP && str_eq(song_act_name(), "COPY 01 TO 04 AT F");
@@ -9607,7 +9607,7 @@ static int test_song_page(void)
                  "too; D as it was", ok);
     for (n = 6; n < NENT; n++)                       /* (no empty entry after D: no COPY+) */
         lists.ent[song.sel][n][0] = (uint8_t)(a + 1u);
-    turn(EN_K2, 40);
+    turn(EN_K2, 99);
     turn(EN_K2, -2);
     ok = song_pick() == SPICK_COPY;
     turn(EN_K2, -1);
@@ -9622,13 +9622,13 @@ static int test_song_page(void)
         sound_name(t, sn);
         str_cpy(m, "T1 D SOUND ", sizeof m);
         str_cpy(m + 11, sn, sizeof m - 11u);
-        turn(EN_K2, 40);                             /* (D, 01 x2) */
+        turn(EN_K2, 99);                             /* (D, 01 x2) */
         ok = sg.entry == 3u && song_pick() == SPICK_SOUND && !memcmp(song_act_name(), "SET SOUND ", 10) &&
              str_eq(song_act_name() + 10, sn) && act_ready();
         press(B_OCTUP);
         ok &= lists.snd[k][3][0] == e0 + 1u && lists.snd[k][3][1] == 2u && !song_pick() && msg_is(m);
         bad += check("  (2.0, #30) KNOB 2 past CLEAR: SOUND; OCT+ puts the track's sound (its preset 3) on D, said", ok);
-        turn(EN_K2, 40);
+        turn(EN_K2, 99);
         ok = song_pick() == SPICK_NOSND && str_eq(song_act_name(), "SET NO SOUND");
         turn(EN_K2, -1);
         ok &= song_pick() == SPICK_SOUND;
@@ -9639,23 +9639,67 @@ static int test_song_page(void)
         ok &= !lists.snd[k][3][0] && !lists.snd[k][3][1] && msg_is("T1 D NO SOUND");
         bad += check("  .. an entry with a sound: NO SOUND last (SOUND, CLEAR before it); OCT+ takes it off, said", ok);
         t->p[P_DEC] = (int16_t)(t->p[P_DEC] + 5);    /* (a knob turned since the load) */
-        turn(EN_K2, 40);
+        turn(EN_K2, 99);
         ok = song_pick() == SPICK_SOUND && !act_ready();
         press(B_OCTUP);
         ok &= !lists.snd[k][3][0] && msg_is("SOUND EDITED") && str_eq(ui.msg2, "SAVE > USER FIRST");
         bad += check("  an edited sound: OCT+ doesn't breathe, refused, the way said (SAVE > USER FIRST)", ok);
         up_store(5, "ENTRY SND");                    /* (the edited one as a user sound, slot 6, loaded) */
         up_load(5);
-        turn(EN_K2, 40);
+        turn(EN_K2, 99);
         press(B_OCTUP);
         ok = lists.snd[k][3][0] == (0x80u | 5u) && !lists.snd[k][3][1] && msg_is("T1 D SOUND ENTRY SND");
         turn(EN_K1, -1);                             /* (C, cleared: empty) */
-        turn(EN_K2, 40);
+        turn(EN_K2, 99);
         ok &= sg.entry == 2u && song_pick() != SPICK_SOUND && song_pick() != SPICK_NOSND;
         press(B_OCTDN);
         bad += check("  a user sound: its slot on the entry; an empty entry: no SOUND to pick", ok);
         up_put(5, 0);
     }
+    lists.song = 0;
+    return bad;
+}
+
+/* (the user's pick) SONG's KNOB 2 has the free numbers too (dim): OCT+ puts a new empty pattern into the one picked;
+ * a DRUM or DRUM-X track's NEW takes the first free in the last 16 (49 .. 64), another track's the first from 01 */
+static int test_song_free(void)
+{
+    int bad = 0, ok;
+    uint32_t k, f, d, e0;
+    char w[16];
+    ui_power_on();
+    lists_clear();
+    k = song.sel;
+    e0 = TSEL->eng_req;
+    fresh_pattern(k, 50);
+    bank_put(k, 0, 0);                               /* T1: A a pattern, the track on it; B empty */
+    f = pool_alloc(NTRK);
+    go_page(GR_SONG);
+    frame();
+    turn(EN_K1, -16);
+    turn(EN_K1, 1);
+    turn(EN_K2, (int32_t)f + 3);                     /* (B: --, NEW, REST, 01 .. : the first free) */
+    str_cpy(w, "NEW ", sizeof w);
+    pat_num(w + 4, f);
+    ok = f < NPAT && sg.entry == 1u && song_pick() == f + 1u && !pool_used(f) && str_eq(song_act_name(), w) && act_ready();
+    press(B_OCTUP);
+    str_cpy(w, "T1 B NEW ", sizeof w);
+    pat_num(w + 9, f);
+    ok &= ent_pat(k, 1) == f && pool_used(f) && pool_len(f) == (uint32_t)TSEL->p[P_SLEN] && msg_is(w) && !song_pick();
+    bad += check("(the user's pick) SONG's KNOB 2: a free number (dim), OCT+ a new empty pattern in it", ok);
+    set_engine_of(TSEL, ENGI_DRUM);
+    d = pool_alloc(k);
+    ok = d >= NPAT - PAT_DRUMS && d < NPAT && pat_free(d) && pool_alloc(NTRK) < NPAT - PAT_DRUMS;
+    turn(EN_K1, 1);
+    turn(EN_K2, 1);                                  /* (C empty: NEW first) */
+    str_cpy(w, "NEW ", sizeof w);
+    pat_num(w + 4, d);
+    ok &= sg.entry == 2u && song_pick() == SPICK_NEW && str_eq(song_act_name(), w);
+    press(B_OCTUP);
+    ok &= ent_pat(k, 2) == d && pool_used(d);
+    set_engine_of(TSEL, e0);
+    ok &= pool_alloc(k) == pool_alloc(NTRK);
+    bad += check("  a DRUM track's NEW: the first free from 49; another track's from 01", ok);
     lists.song = 0;
     return bad;
 }
@@ -10282,6 +10326,7 @@ int main(void)
     bad += test_scenes();                             /* Skiff: scenes (the PERFORM layer's KEYS SCENE) */
     bad += test_song_page();                          /* Skiff phase 5: SEQ > SONG */
     bad += test_song_chain();                         /* (2.0, #44) a chain on SONG and NOTES */
+    bad += test_song_free();                          /* (the user's pick) SONG: free numbers, the drum patterns */
     bad += test_duck_page();                          /* Skiff: FX > DUCK */
     bad += test_fx_bus_pages();                       /* (2.5) FX > DELAY, FX > REVERB */
     bad += test_sel_note();                           /* (2.5) NOTES' delete hint */

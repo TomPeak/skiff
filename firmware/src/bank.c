@@ -384,12 +384,15 @@ static int pat_keep_now(uint32_t id, const uint8_t *r)
 }
 /* the autosave's round may wait for its gap (project.c): 0 nothing waiting, 1 some, 2 no slot free (not to wait) */
 static uint32_t keep_waiting(void) { return pend_free() == PEND_N ? 0u : pend_free() ? 1u : 2u; }
-/* the first empty id, none waiting either; NPAT: the pool full */
-static uint32_t pool_alloc(void)
+/* an empty id, none waiting either */
+static int pat_free(uint32_t id) { return id < BK_POOL && !pool_used(id) && pend_at(id) == PEND_N; }
+/* the first empty id for track k: (the user's pick) a DRUM or DRUM-X track's in the last 16 (49 .. 64) first, then
+ * round from 01; another's (NTRK: any track's) from 01, so the last 16 last; NPAT: the pool full */
+static uint32_t pool_alloc(uint32_t k)
 {
-    uint32_t id;
-    for (id = 0; id < BK_POOL; id++)
-        if (!pool_used(id) && pend_at(id) == PEND_N)
+    uint32_t i, id, at = k < NTRK && drum_track(&trk[k]) ? BK_POOL - PAT_DRUMS : 0u;
+    for (i = 0; i < BK_POOL; i++)
+        if (pat_free(id = (at + i) % BK_POOL))
             return id;
     return NPAT;
 }
@@ -830,7 +833,7 @@ static int trk_keep(uint32_t k)
     h = proj_hash(bk_rec, BK_REC);
     if (trk_pid[k] && h == trk_sig[k])
         return 0;
-    id = trk_pid[k] ? trk_pid[k] - 1u : pool_alloc();
+    id = trk_pid[k] ? trk_pid[k] - 1u : pool_alloc(k);
     if (id == NPAT || pat_keep_now(id, bk_rec))
         return 1;
     if (!trk_pid[k])
@@ -1038,7 +1041,7 @@ static int bank_put(uint32_t k, uint32_t e, int erase)
     } else {
         if (trk_pid[k] && trk_pid[k] != id + 1u && trk_keep(k))
             return 4;                              /* (the pattern it is on kept first) */
-        if (id == PAT_NONE && (id = pool_alloc()) == NPAT)
+        if (id == PAT_NONE && (id = pool_alloc(k)) == NPAT)
             return 4;
         if (!trk_rec(k) || pat_keep_now(id, bk_rec))
             return 4;
@@ -1104,7 +1107,7 @@ static void bank_poll_trk(uint32_t k)
         return;
     if (!q->same && (trk_pid[k] || !q_empty(q)) &&     /* ((2.0.3, #71) the same pattern: nothing went out) */
         bk_pack_raw(bk_rec, k, q->step, q->time, &q->motion, (q->motion.on >> k) & 1u)) {
-        id = trk_pid[k] ? trk_pid[k] - 1u : pool_alloc();   /* (a new pattern went out: the first free id) */
+        id = trk_pid[k] ? trk_pid[k] - 1u : pool_alloc(k);   /* (a new pattern went out: the first free id) */
         if (trk_pid[k] && ((motion_lost >> k) & 1u))
             rec_motion_of(bk_rec, id);
         if (trk_pid[k] && proj_hash(bk_rec, BK_REC) == trk_sig[k])
@@ -1171,7 +1174,7 @@ static int stage_entry(uint32_t k, uint32_t e, uint32_t m, uint32_t adv, uint32_
     track_t *t = &trk[k];
     launch_t *q = &launch_q[k];
     uint32_t id = ent_pat(k, e), full = 0, i, same;
-    if (q->done || (!trk_pid[k] && !seq_is_empty(t) && pool_alloc() == NPAT))
+    if (q->done || (!trk_pid[k] && !seq_is_empty(t) && pool_alloc(k) == NPAT))
         return 4;
     if ((adv == 2u || !bank_used(k, e)) && (adv || ent_rest(k, e))) {   /* ((2.0) adv 2: SONG ONCE's end, a rest on e
                                                                             * whatever it names: song_poll) */
@@ -1786,10 +1789,16 @@ static int song_put(uint32_t k, uint32_t e, uint32_t p)
     uint32_t id = ent_pat(k, e), n = NPAT, f = p == SPICK_COPYP ? ent_free_after(k, e) : e, b0, b1, j;
     uint8_t nid[NENT];
     char b[24], c[4];
+    if (p && p <= NPAT && !pool_used(p - 1u)) {   /* ((the user's pick) a free number picked: NEW, into it) */
+        n = p - 1u;
+        p = SPICK_NEW;
+    }
     if (p == SPICK_NEW) {
         bank_poll();
         rec_empty(bk_rec, &trk[k]);
-        if ((n = pool_alloc()) == NPAT || pat_keep_now(n, bk_rec)) {
+        if (n == NPAT)
+            n = pool_alloc(k);
+        if (!pat_free(n) || pat_keep_now(n, bk_rec)) {
             ui_way("PATTERNS FULL", WAY_PATTERNS);
             return 4;
         }
@@ -2146,7 +2155,7 @@ static int proj_migrate(int allowed)
                 tv[i] = p->t[k].p[BK_TIME[i]];
             if (!bk_pack_raw(bk_rec, k, p->t[k].step, tv, &p->motion, (p->motion.on >> k) & 1u))
                 break;
-            if ((id = pool_find(bk_rec)) == NPAT && ((id = pool_alloc()) == NPAT || pat_keep_now(id, bk_rec)))
+            if ((id = pool_find(bk_rec)) == NPAT && ((id = pool_alloc(NTRK)) == NPAT || pat_keep_now(id, bk_rec)))
                 break;                             /* (the pool full) */
             p->ent[k][0][0] = (uint8_t)(id + 1u);
         }

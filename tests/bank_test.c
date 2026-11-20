@@ -292,7 +292,7 @@ static int keep(void)
     bad += check("  the same as stored: nothing waits, nothing written", ok);
     ok = pat_keep_rec(6, zero) == 0 && !pool_used(6) && pat_flush_one() == 0 && !bk.len[6] && !pool_used(6);
     bad += check("  an empty record empties the pattern (at the flush)", ok);
-    ok = pool_alloc() == 0u && pat_keep_rec(0, r1) == 0 && pool_alloc() == 1u;
+    ok = pool_alloc(NTRK) == 0u && pat_keep_rec(0, r1) == 0 && pool_alloc(NTRK) == 1u;
     bad += check("  pool_alloc: the first empty id, a waiting one counts", ok);
     memcpy(r3, r2, BK_REC);
     r3[BK_STEPS] ^= 1u;
@@ -362,7 +362,7 @@ static int entries(void)
         if (!pool_used(i))
             ok &= pool_put(i, r) == 0;
     simple(0, 70, 4, DIR_FWD);                    /* new steps: no id for them */
-    ok &= pool_alloc() == NPAT && keep_all() == 1 && !trk_pid[0] && ent_go(0, 0) == 4 && t->step[0].note[0] == 70 &&
+    ok &= pool_alloc(NTRK) == NPAT && keep_all() == 1 && !trk_pid[0] && ent_go(0, 0) == 4 && t->step[0].note[0] == 70 &&
           bank_put(0, 5, 0) == 4 && !bank_used(0, 5) && project_save_as(1, 0) == 1 && str_eq(ui.msg, "PATTERNS FULL");
     song.playing = 1;
     ok &= bank_switch(0, 0) == 4 && bank_next(0) == BK_NONE;
@@ -370,7 +370,7 @@ static int entries(void)
     ok &= bank_put(0, 1, 0) == 0 && trk_pat(0) == b && !pat_decode(t, b, st, v, &ms) && st[0].note[0] == 70;
     bad += check("  the pool full: new steps get no id (PATTERNS FULL: no switch, no SAVE into an empty entry, no project "
                  "save; the track stays on them); SAVE over a named entry goes", ok);
-    ok = bank_put(0, 0, 1) == 0 && !pool_used(a) && pool_alloc() == a;
+    ok = bank_put(0, 0, 1) == 0 && !pool_used(a) && pool_alloc(NTRK) == a;
     bad += check("  an entry erased (nothing else naming its pattern): its id free again", ok);
 
     ok = bk_pack(rb, t);

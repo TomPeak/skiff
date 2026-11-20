@@ -467,6 +467,7 @@ typedef struct { uint8_t slot, repeat; } chain_row_t;
 #define NENT 16u
 #define PAT_NONE 0xFFu                 /* no pattern (an entry stores id + 1, 0 = empty: ui.c lists) */
 #define PAT_REST (NPAT + 1u)           /* (#28) what an entry stores for a REST (no pattern: ent_pat says PAT_NONE) */
+#define PAT_DRUMS 16u                  /* (the user's pick) a DRUM track's new patterns: the pool's last 16 first (bank.c) */
 enum { SONG_OFF, SONG_ON, SONG_ONCE };   /* ui.c lists.song ((2.0, #47, the user's pick 4A) ONCE: bank.c song_poll; a
                                           * project holding it: firmware before refuses it, as a REST) */
 #define REPS_CHAIN 16u                 /* (2.0, #44, 3A) an entry's REPS byte (0..15: 1x..16x): on CHAIN into the next

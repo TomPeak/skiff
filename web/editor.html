@@ -1242,8 +1242,8 @@ function portPairs(access) {
    (apcDrumLeds) */
 const APC_PORT = /apc mini mk2/i;
 const APC = { MUTE: 100, PAGE: 112, DRUM: 117, PLAY: 119, FADER: 48, SHIFT: 122, FULL: 0x96, KEPT: 0x92, REST: 0x91, FAINT: 0x90, BLINK: 0x9E, BTN: 0x90,
-  GREEN: 87, WHITE: 3, RED: 5, QUAD: [5, 13, 37, 81] };   /* (statuses: 100 %, 50 %, 25 %, 10 %, blinking 1/4; velocities: the
-                                                          palette's; QUAD the pattern mode's 4x4 quarters: red, yellow, sky, violet) */
+  GREEN: 87, WHITE: 3, RED: 5, BAND: [5, 13, 37, 81] };   /* (statuses: 100 %, 50 %, 25 %, 10 %, blinking 1/4; velocities: the
+                                                          palette's; BAND the pattern mode's two-row bands: red, yellow, sky, violet) */
 /* the velocities' colours (Akai's APC mini mk2 protocol v1.0). Its SysEx colours aren't used: even values reportedly
    turn a pad off */
 const APC_PALETTE = "0000001e1e1e7f7f7fffffffff4c4cff0000590000190000ffbd6cff5400591d00271b00ffff4cffff0059590019190088ff4c54ff001d5900142b004cff4c00ff000059000019004cff5e00ff1900590d0019024cff8800ff5500591d001f124cffb700ff990059350019124cc3ff00a9ff0041520010194c88ff0055ff001d590008194c4cff0000ff000059000019874cff5400ff1900640f0030ff4cffff00ff590059190019ff4c87ff005459001d220013ff150099350079510043640003390000573500547f0000ff00454f2500cc7f7f7f202020ff0000bdff2dafed0664ff09108b0000ff8700a9ff002aff3f00ff7a00ffb21a7d402100ff4a0088e10672ff1500ff003bff2659ff7138ffcc5b8aff3151c6877fe9d31dffff005dff7f00b9b00090ff00835d07392b00144c100d503815152a16205a693c1ca8000ade513dd86a1cffe1269ee12f67b50f1e1e30dcff6b80ffbd9a99ff8e66ff404040757575e0ffffa000003500001ad000074200b9b0003f3100b35f004b1502";
@@ -1359,8 +1359,9 @@ function apcDrumLeds(dr, playing) {
 }
 /* the pattern mode's LEDs: the pads the pool's 64 patterns, 01 at the top left, across and down (SAVE › PATTERNS'
    grid): the one track k is on green, the one its staged entry names blinking; the others in the colour of the track
-   whose list names them (or that is on them; k first, then T1..T6), k's full, another's 50 %; the rest in their 4x4
-   quarter's colour (APC.QUAD: 01..04 red, 05..08 yellow, 33..36 sky, 37..40 violet, and down): one no list names 50 %
+   whose list names them (or that is on them; k first, then T1..T6), k's full, another's 50 %; the rest in their two-row
+   band's colour (APC.BAND: 01..16 red, 17..32 yellow, 33..48 sky, 49..64 violet, the DRUM tracks' own: the firmware's
+   bank.c pool_alloc): one no list names 50 %
    (a saved project uses it) or 25 % (nothing does), an empty one 10 %. The bottom buttons 1..6 the tracks, k's lit.
    The bottom side button PLAY. pool, list: POOL's and LIST's replies, or none (all dark); tracks: T1..T6's colours as
    velocities (apcNear) */
@@ -1368,7 +1369,7 @@ function apcPatLeds(pool, list, k, playing, tracks = []) {
   const m = new Map(), x = list && list.tracks[k], nx = x && x.next >= 0 && x.next !== x.cur ? x.ent[x.next].pat - 1 : -1;
   const names = (t, p) => t.pat === p || t.ent.some((e) => e.pat === p + 1);
   for (let n = 0; n < 64; n++) {
-    const p = 8 * (7 - (n >> 3)) + n % 8, y = pool && pool.pats[p], q = APC.QUAD[(p >> 5) * 2 + (p % 8 >> 2)];
+    const p = 8 * (7 - (n >> 3)) + n % 8, y = pool && pool.pats[p], q = APC.BAND[p >> 4];
     let led = [APC.FULL, 0];
     if (x && x.pat === p) led = [APC.FULL, APC.GREEN];
     else if (nx === p) led = [APC.BLINK, APC.GREEN];
@@ -3135,8 +3136,9 @@ function makeMockDevice(opt = {}) {
         } else if (op === 9) rc = sndPut(k, e, a.slice(3));
         else if (op === 5) { if (!L[k][e][0] || (!v && e === 15)) rc = 1; else L[k][e][1] = v ? v - 1 : 16; }   /* ((2.0) 0: */
         else if (op === 6) st.song = k;                                                                       /* CHAIN) */
-        else if (op === 7) {                           /* ((2.0) NEW: the first free number) */
-          const n = st.pool.findIndex((x) => !x);
+        else if (op === 7) {                           /* ((2.0) NEW: the first free number; a DRUM track's from 49) */
+          const at = ["DRUM", "DRUM-X"].includes(ENG[st.tracks[k].engine].name) ? 48 : 0;
+          const i = st.pool.findIndex((_, j) => !st.pool[(j + at) % 64]), n = i < 0 ? -1 : (i + at) % 64;
           if (n < 0) rc = 4; else { st.pool[n] = st.tracks[k].p[29] || 16; L[k][e][0] = n + 1; if (st.cur[k] === e) rc = entryGo(k, e); }
         } else if (op === 8) rc = copyPlus(k, e);
         b(a.length ? op : 0); b(rc); b(two ? st.song : st.song ? 1 : 0);
@@ -3755,7 +3757,7 @@ const TEXT = {
     sgConfirmEmpty: "パターン {n} を空にしますか？ ステップ、NUDGE、オートメーションが消えます。パターンとそれを使うエントリーは残ります。元に戻せません。",
     sgConfirmUnused: "未使用のパターン {n} 個をクリアしますか？ どこからも使われていません。元に戻せません。",
     sgEmpty: "空です", sgAutoFull: "完了（オートメーションなし: AUTOMATION FULL）", sgStopClear: "停止してからクリアしてください",
-    sgApc: "APC mini mk2 接続中: 1〜6列は T1〜T6 のエントリー、7・8列はシーン、下のボタン1〜6は MUTE、右上の2つはページ（A–H / I–P）、右下は PLAY、フェーダー1〜6は LEVEL。SHIFT でパターンモード: 下のボタン1〜6でトラックを選び、パッドはパターンプール（左上が 01）、押すとそのトラックが再生（緑: 再生中、点滅: 次、ほかは使っているトラックの色、残りは 4×4 の区画の色: 赤・黄・水色・紫）。DRUM（右の6番目）でドラムモード: 光る下のボタンが DRUM のトラック（押して選ぶ）。選ぶと 8 列が各レーン（左が KICK）で、パターンで鳴るレーンは音量の高さまで赤く光り、その下のフェーダーが音量、下のボタンがミュート。もう一度 SHIFT / DRUM でソングに戻ります",
+    sgApc: "APC mini mk2 接続中: 1〜6列は T1〜T6 のエントリー、7・8列はシーン、下のボタン1〜6は MUTE、右上の2つはページ（A–H / I–P）、右下は PLAY、フェーダー1〜6は LEVEL。SHIFT でパターンモード: 下のボタン1〜6でトラックを選び、パッドはパターンプール（左上が 01）、押すとそのトラックが再生（緑: 再生中、点滅: 次、ほかは使っているトラックの色、残りは2列ずつの帯の色: 01–16 赤・17–32 黄・33–48 水色・49–64 紫（ドラム用））。DRUM（右の6番目）でドラムモード: 光る下のボタンが DRUM のトラック（押して選ぶ）。選ぶと 8 列が各レーン（左が KICK）で、パターンで鳴るレーンは音量の高さまで赤く光り、その下のフェーダーが音量、下のボタンがミュート。もう一度 SHIFT / DRUM でソングに戻ります",
     sgFull: "パターンがいっぱいです: プールで未使用のものをクリアしてください", sgFailed: "本体で失敗しました", sgNothing: "クリアするものがありません", sgInUse: "使用中です",
     sgNoFw: "このファームウェアにはソングのコマンドがありません。Skiff を更新してください。",
     confirmSave: "スロット {n} に上書き保存しますか？", confirmLoad: "スロット {n} を読み込みますか？ すべてのトラックの音色とシーケンスが置き換わります（元に戻せません）。",
@@ -3918,7 +3920,7 @@ const TEXT = {
     sgConfirmEmpty: "Empty pattern {n}? Its steps, NUDGEs and automation go; the pattern and the entries naming it stay. It can't be undone.",
     sgConfirmUnused: "Clear the {n} unused patterns? Nothing uses them. It can't be undone.",
     sgEmpty: "Empty", sgAutoFull: "Done, without its automation (AUTOMATION FULL)", sgStopClear: "Stop to clear",
-    sgApc: "APC mini mk2 connected: columns 1–6 T1–T6's entries, columns 7–8 the scenes, bottom buttons 1–6 MUTE, the top two side buttons the page (A–H, I–P), the bottom one PLAY, faders 1–6 LEVEL. SHIFT: the pattern mode, bottom buttons 1–6 pick a track, the pads the pattern pool (01 at the top left): press one and that track plays it (green: playing, blinking: next, the others in the colour of the track that uses them, the rest in their 4×4 quarter's: red, yellow, sky, violet). DRUM (the sixth side button): the drum mode, the lit bottom buttons the DRUM tracks (press one to show it): its 8 lanes a column each (KICK at the left), a lane the pattern plays lit red as high as its level, the fader under it that level, the button under it its mute; SHIFT or DRUM again: back to the song",
+    sgApc: "APC mini mk2 connected: columns 1–6 T1–T6's entries, columns 7–8 the scenes, bottom buttons 1–6 MUTE, the top two side buttons the page (A–H, I–P), the bottom one PLAY, faders 1–6 LEVEL. SHIFT: the pattern mode, bottom buttons 1–6 pick a track, the pads the pattern pool (01 at the top left): press one and that track plays it (green: playing, blinking: next, the others in the colour of the track that uses them, the rest in their two-row band's: 01–16 red, 17–32 yellow, 33–48 sky, 49–64 violet, the drum patterns'). DRUM (the sixth side button): the drum mode, the lit bottom buttons the DRUM tracks (press one to show it): its 8 lanes a column each (KICK at the left), a lane the pattern plays lit red as high as its level, the fader under it that level, the button under it its mute; SHIFT or DRUM again: back to the song",
     sgFull: "Patterns full: clear unused ones in the pool", sgFailed: "Failed on the device", sgNothing: "Nothing to clear", sgInUse: "In use",
     sgNoFw: "This firmware has no song commands: update Skiff.",
     confirmSave: "Overwrite slot {n}?", confirmLoad: "Load slot {n}? The sounds and sequences of every track are replaced (no undo).",

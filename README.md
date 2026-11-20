@@ -82,6 +82,39 @@ Skiff is free software, a fork of [Felucca](https://github.com/hugelton/Felucca)
 keeps Felucca's engines, sound and file formats, so Felucca's sounds and projects load in Skiff. Skiff is not
 Felucca: please report Skiff's behaviour [here](https://github.com/illuminus5/skiff/issues), not in Felucca's Issues.
 
+## This fork: what differs from the official Skiff
+
+This is [TomPeak/skiff](https://github.com/TomPeak/skiff), the official [illuminus5/skiff](https://github.com/illuminus5/skiff)
+(2.7, merged in) with these changes on top. The releases and install links below are still the official ones: to run this
+fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_install.py`.
+
+**On the unit, SEQ › NOTES (the piano roll) with REC off**
+
+- **A key writes an empty cursor step**, stopped or playing, as step entry does: keys together a chord, PRESETS
+  meanwhile its LENGTH, one undo a step (STEP WRITE). Armed and playing stays live recording; armed and stopped
+  replaces the step.
+- **On a step with notes, a key adds or deletes:** a note's own key deletes it (DELETED C4), another key adds its note
+  to the chord (up to 4, every VOICE mode; ADDED G4). PICK moves to SHIFT + a key.
+- **The cursor step's notes glow and breathe** (a halo, their keys lit on the strip; MENU › ANIM OFF keeps them lit).
+  The footer says KEYS: WRITE, ADD/DEL or PICK.
+
+**On the unit, SEQ › SONG and the pattern pool**
+
+- **KNOB 2 lists every number, 01–64:** the used patterns as before, the free ones dim. OCT+ on a free one puts a new
+  empty pattern under that number into the entry (NEW 05), so you choose where it goes.
+- **The drum patterns live in 49–64:** a new pattern for a DRUM or DRUM-X track (NEW, a pattern a track keeps) takes
+  the first free number from 49 on; the other tracks' start from 01 (and fill 49–64 only when the rest is full).
+
+**In the Skiff Editor**
+
+- **The Sequencer as a piano roll** with the drum lanes and a velocity lane under them.
+- **Akai APC mini mk2:** the pads in the tracks' own colours; **SHIFT** a pattern mode (the 64 patterns on the pads,
+  in two-row colour bands, 49–64 the drum patterns; bottom buttons pick the track, a pad plays its pattern); **DRUM**
+  (the sixth side button) a drum mode (a DRUM track's lanes as red level bars, the faders their levels, the buttons
+  their mutes). The same controller works without a computer through
+  [apcconnect](https://git.peterscharmueller.com/tompeak/apcconnect.git), an ESP32-S3 USB host.
+- **Skiff for iPad:** the editor, installer, Try and Learn as an iPad app (below).
+
 ## Install
 
 Custom firmware, at your own risk; the way back to the official firmware is below.
@@ -367,7 +400,7 @@ tracks' colours of the THEME.
 | Control | Does |
 |---|---|
 | Bottom buttons 1–6 | pick T1–T6 (lit: the one picked; the last one picked when the mode comes back, T1 at first) |
-| Pads | the pattern pool's 01–64, 01 at the top left, across then down (SAVE › PATTERNS' grid): green the pattern the picked track is on, blinking the one it is staged to go to, the others in the colour of the track whose list uses them (the picked track's bright, another's at half), the rest in their 4×4 quarter's colour (top left red, top right yellow, bottom left sky, bottom right violet): half one no list uses, dim one nothing uses, faint an empty one. Press one: the track plays it |
+| Pads | the pattern pool's 01–64, 01 at the top left, across then down (SAVE › PATTERNS' grid): green the pattern the picked track is on, blinking the one it is staged to go to, the others in the colour of the track whose list uses them (the picked track's bright, another's at half), the rest in their two-row band's colour (01–16 red, 17–32 yellow, 33–48 sky, 49–64 violet: the drum patterns, where a DRUM track's new ones go): half one no list uses, dim one nothing uses, faint an empty one. Press one: the track plays it |
 | Faders 1–6 | T1–T6's LEVEL (CC7) |
 | Bottom side button | PLAY |
 

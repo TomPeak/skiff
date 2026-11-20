@@ -54,7 +54,8 @@ static int pool_used(uint32_t id);
 static uint32_t ent_len48(uint32_t k, uint32_t e);   /* ((2.5, 2B) bank.c: a song's bars) */
 static uint32_t ent_at48(uint32_t k, uint32_t e);
 static uint32_t song_at(uint32_t *k, uint32_t *at);
-static uint32_t pool_alloc(void);
+static uint32_t pool_alloc(uint32_t k);
+static int pat_free(uint32_t id);
 static uint32_t pool_alloc_after(uint32_t orig);   /* ((2.0, #34) a copy's number: bank.c) */
 static uint32_t bank_cur(uint32_t k);
 static uint32_t bank_gen(void);
@@ -2400,7 +2401,7 @@ static const char *song_act_name(void)
         return "SET REST";
     if (p == SPICK_NEW) {                        /* (the first free number: none, NEW alone) */
         str_cpy(b, "NEW", sizeof b);
-        if ((n = pool_alloc()) < NPAT) {
+        if ((n = pool_alloc(song.sel % NTRK)) < NPAT) {
             b[3] = ' ';
             pat_num(b + 4, n);
         }
@@ -2428,7 +2429,7 @@ static const char *song_act_name(void)
         }
         return b;
     }
-    str_cpy(b, "SET ", sizeof b);
+    str_cpy(b, pool_used(p - 1u) ? "SET " : "NEW ", sizeof b);   /* ((the user's pick) a free number: a new one in it) */
     pat_num(b + 4, p - 1u);
     return b;
 }
@@ -2520,7 +2521,8 @@ static int act_ready(void)
         return 0;
     if (cur_page()->graph == GR_EVENTS) return ui.ev_top ? motion_count(TSEL) != 0u : ev_act_ready();
     if (cur_page()->graph == GR_SONG)                   /* (Skiff phase 5) a pick, else an entry to play ((#28) a REST) */
-        return song_pick() >= SPICK_NEW && song_pick() < SPICK_CLEAR ? pool_alloc() < NPAT :   /* ((2.0) NEW, COPY+) */
+        return song_pick() && song_pick() <= NPAT && !pool_used(song_pick() - 1u) ? pat_free(song_pick() - 1u) :
+               song_pick() >= SPICK_NEW && song_pick() < SPICK_CLEAR ? pool_alloc(s % NTRK) < NPAT :   /* ((2.0) NEW, COPY+) */
                song_pick() == SPICK_SOUND ? snd_of(s, sb) :   /* ((#30) a sound as it was loaded) */
                song_pick() == SPICK_CLEAR ? ent_on(s, sg.entry) : song_pick() || ent_on(s, sg.entry);
     if (cur_page()->graph == GR_USER)
