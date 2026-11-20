@@ -504,7 +504,10 @@ unused one). Each acts through the device's own code and the device says so on i
 asked first, as on the device. Nothing of these is pushed: the editor reads what it shows again about once a second.
 An **APC mini mk2** on the computer plays the Song tab (`apcAction`, `apcLeds`): its pads and buttons call what the tab's
 own controls call, the faders send each track's CC7, and its LEDs show what is read back, not what was pressed, the song
-read every 400 ms while it is there. Its SHIFT turns it into the drum mode (`apcDrumLeds`) and back: the
+read every 400 ms while it is there. Its SHIFT turns it into the pattern mode (`apcPatLeds`) and back: the bottom
+buttons pick a track, the pads are the pool as SAVE › PATTERNS draws it (01 at the top left), and a pad puts the
+entry the track is on onto that pattern (`apcPat`: LIST SET, a launch; on no entry's pattern the first empty entry,
+then PLAY to it). Its DRUM (the sixth side button, alone) turns it into the drum mode (`apcDrumLeds`) and back: the
 bottom buttons light on the DRUM and DRUM-X tracks, one picked each time; its lanes are then the pad columns, KICK at
 the left, each a red bar as high as its level where the pattern strikes it, the fader under it that level (TRACK_PARAM,
 the selection stays), the button under it its mute (LEVEL 0, the level given back). The pads only show. No firmware of its own and no setting: it works while it is plugged in.

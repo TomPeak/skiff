@@ -35,7 +35,7 @@ const FW_ROOT = process.env.FELUCCA_ROOT || join(HERE, "..");
 const html = readFileSync(join(HERE, "editor.html"), "utf8");
 const proto = html.slice(html.indexOf("/*PROTO-BEGIN*/"), html.indexOf("/*PROTO-END*/"));
 const E = vm.runInNewContext(proto + `
-;({ frame, unframe, parse, songReply, req, Link, parseWav, resample, normalize, takeSample, kitZones, LANES, portPairs, apcPorts, apcAction, apcLeds, apcDrumLeds, apcNear, APC, autoTrim, zoomView, rootFromName, buildSlot, makeMockDevice, CMD, SMP,
+;({ frame, unframe, parse, songReply, req, Link, parseWav, resample, normalize, takeSample, kitZones, LANES, portPairs, apcPorts, apcAction, apcLeds, apcDrumLeds, apcPatLeds, apcNear, APC, autoTrim, zoomView, rootFromName, buildSlot, makeMockDevice, CMD, SMP,
    UP, bank, capturePatch, auditionPatch, lightRefuses, startWatch, libraryFile, readLibraryFile, paramKeys, patternFromSteps, stepsFromPattern, upName,
    mixer, parseNotes, parseHits, hitsText, gridFromSteps, LANE_NOTE, LANE_OF, readDevicePreferences, devicePresetRows, TC_NAMES, engineOrder, ENGINE_ORDER, aliasOf, fmtValue, FM6, enumShown, F,
    FM4, fromDigital, fromPerc, DRUM_KIT_E, DX_KIT_DEF, DX_KITS, DRUMX_PKIT,
@@ -1143,6 +1143,39 @@ async function editorLists() {
   m = E.apcDrumLeds({ ...dr, k: -1 }, false);
   ok([...Array(64).keys()].every((n) => !m.get(n)[1]) && m.get(A.MUTE + 2)[1] === 1 && m.get(A.MUTE + 5)[1] === 1 && !m.get(A.MUTE)[1],
      "apc drum: to pick, the DRUM tracks lit, the pads dark");
+  ok(m.get(A.DRUM)[1] === 1 && !E.apcLeds(list, perf, 0, false).has(A.DRUM), "apc drum: DRUM lit in the drum mode only");
+  /* DRUM: the drum mode; SHIFT: the pattern mode */
+  ok(act(0x90, A.DRUM, 127) === '{"do":"drums"}' && dact(0x90, A.DRUM, 127) === '{"do":"drums"}' && dact(0x90, A.DRUM, 127, "pats") === '{"do":"drums"}' &&
+     act(0x80, A.DRUM, 0) === "null", "apc: DRUM pressed toggles the drum mode, from any mode");
+  ok(dact(0x90, A.SHIFT, 127, "pats") === '{"do":"shift"}', "apc pats: SHIFT back");
+  ok(dact(0x90, 56, 127, "pats") === '{"do":"pat","p":0}' && dact(0x90, 63, 127, "pats") === '{"do":"pat","p":7}' &&
+     dact(0x90, 0, 127, "pats") === '{"do":"pat","p":56}' && dact(0x90, 7, 127, "pats") === '{"do":"pat","p":63}',
+     "apc pats: the pads the pool, 01 top left, 08 top right, 57 bottom left, 64 bottom right");
+  ok(dact(0x90, 100, 127, "pats") === '{"do":"track","k":0}' && dact(0x90, 105, 127, "pats") === '{"do":"track","k":5}' &&
+     dact(0x90, 106, 127, "pats") === "null" && dact(0x90, 112, 127, "pats") === "null" && dact(0x90, 119, 127, "pats") === '{"do":"play"}',
+     "apc pats: bottom buttons 1..6 pick T1..T6, the seventh and the page nothing; PLAY");
+  ok(dact(0xB0, 50, 99, "pats") === '{"do":"level","k":2,"v":99}' && dact(0xB0, 54, 99, "pats") === "null", "apc pats: faders 1..6 LEVEL");
+  /* 01..05 hold notes (04: nothing uses it); T1 on 01, staged to 03; T2's list 03 and 05 */
+  const pool = { pats: Array.from({ length: 64 }, (_, i) => (i < 5 ? { len: 16, refs: i === 3 ? 0 : 1 } : { len: 0, refs: 0 })) };
+  const plist = { tracks: [{ cur: 0, next: 1, pat: 0, ent: ent({ 0: { pat: 1 }, 1: { pat: 3 } }) },
+    { cur: -1, next: -1, pat: -1, ent: ent({ 0: { pat: 3 }, 1: { pat: 5 } }) }] };
+  const t2 = E.apcNear("#22C3B4");
+  m = E.apcPatLeds(pool, plist, 0, true, [t1, t2]);
+  ok(led(56) === `${A.FULL},${A.GREEN}` && led(58) === `${A.BLINK},${A.GREEN}` && led(60) === `${A.KEPT},${t2}` &&
+     led(57) === `${A.KEPT},${A.RED}` && led(59) === `${A.REST},${A.RED}` && led(61) === `${A.FAINT},${A.QUAD[1]}`,
+     "apc pats: the track's pattern green, its staged one blinking, another track's 50 % of its colour; no list's its quarter's colour (unused 25 %), empty 10 %");
+  ok(led(63) === `${A.FAINT},${A.QUAD[1]}` && led(0) === `${A.FAINT},${A.QUAD[2]}` && led(31) === `${A.FAINT},${A.QUAD[3]}` &&
+     led(35) === `${A.FAINT},${A.QUAD[0]}` && led(36) === `${A.FAINT},${A.QUAD[1]}`,
+     "apc pats: the 4x4 quarters: 08 yellow, 57 sky, 40 violet; 28 red, 29 yellow");
+  ok(m.get(A.MUTE)[1] === 1 && [1, 2, 3, 4, 5].every((k) => !m.get(A.MUTE + k)[1]) && m.get(A.PLAY)[1] === 1 && !m.has(A.DRUM),
+     "apc pats: the picked track's button lit; PLAY");
+  m = E.apcPatLeds(pool, plist, 1, false, [t1, t2]);
+  ok(led(56) === `${A.KEPT},${t1}` && led(58) === `${A.FULL},${t2}` && led(60) === `${A.FULL},${t2}` && m.get(A.MUTE + 1)[1] === 1,
+     "apc pats: a track on no pattern: none green; its own patterns full in its colour (03, T1's too: the picked track's first)");
+  m = E.apcPatLeds(pool, plist, 1, false);
+  ok(led(56) === `${A.KEPT},${A.WHITE}` && led(58) === `${A.FULL},${A.WHITE}`, "apc pats: no colours: white");
+  m = E.apcPatLeds(null, null, 0, false);
+  ok(m.size === 64 + 6 + 1 && [...m.values()].every((x) => x[1] === 0), "apc pats: no device: every LED dark");
 }
 
 /* (2.0, INFO 58 01 01) LIST2 (SONG ONCE, the chains as kept), LIST's 5 0 CHAIN, 6 2 ONCE, 7 NEW, 8 COPY+ (a chain: all

@@ -333,11 +333,24 @@ tracks' colours of the THEME.
 | Bottom side button | PLAY |
 | Faders 1–6 | T1–T6's LEVEL (CC7) |
 
-**Drum mode** (SHIFT; SHIFT again back to the song):
+**Pattern mode** (SHIFT; SHIFT again back to the song):
 
 | Control | Does |
 |---|---|
-| Bottom buttons 1–6 | first, lit on the DRUM and DRUM-X tracks: press one to show it (each SHIFT, pick again) |
+| Bottom buttons 1–6 | pick T1–T6 (lit: the one picked; the last one picked when the mode comes back, T1 at first) |
+| Pads | the pattern pool's 01–64, 01 at the top left, across then down (SAVE › PATTERNS' grid): green the pattern the picked track is on, blinking the one it is staged to go to, the others in the colour of the track whose list uses them (the picked track's bright, another's at half), the rest in their 4×4 quarter's colour (top left red, top right yellow, bottom left sky, bottom right violet): half one no list uses, dim one nothing uses, faint an empty one. Press one: the track plays it |
+| Faders 1–6 | T1–T6's LEVEL (CC7) |
+| Bottom side button | PLAY |
+
+A pad puts the pattern on the entry the track is on (LIST SET, as SEQ › SONG's KNOB 2 and OCT+ do): it comes in at the
+LAUNCH point as a launch does, at once when stopped. The list changes with it. On a track that is on no entry's
+pattern, the list's first empty entry takes it, and the track goes to it.
+
+**Drum mode** (DRUM, the sixth side button, pressed alone; DRUM again back to the song; lit while on):
+
+| Control | Does |
+|---|---|
+| Bottom buttons 1–6 | first, lit on the DRUM and DRUM-X tracks: press one to show it (each DRUM, pick again) |
 | Pads | the shown track's 8 lanes, a column each, KICK at the left, BELL at the right: a lane the pattern plays is a red bar as high as its level (a muted one: its bottom pad dim white); they only show |
 | Faders 1–8 | the level of the lane above each |
 | Bottom buttons 1–8 | once a track is shown: the mute of the lane above each (lit: muted; its level comes back) |
