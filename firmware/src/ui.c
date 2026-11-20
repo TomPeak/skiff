@@ -2413,6 +2413,8 @@ static const char *song_act_name(void)
         b[12] = (char)('A' + n), b[14] = (char)('A' + n + b1 - b0);
         return b;
     }
+    if (id == PAT_NONE)                            /* ((the user's pick) an empty entry: the track's pattern copied */
+        id = trk_pat(song.sel);                    /*  into a free number) */
     n = id != PAT_NONE ? pool_alloc_after(id) : NPAT;
     if (n < NPAT && p <= NPAT && !pool_used(p - 1u))   /* ((the user's pick) a free number: the copy into it) */
         n = p - 1u, p = SPICK_COPY;

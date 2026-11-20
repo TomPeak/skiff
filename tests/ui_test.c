@@ -9660,35 +9660,41 @@ static int test_song_page(void)
     return bad;
 }
 
-/* (the user's pick) SONG's KNOB 2 has the free numbers too (dim): OCT+ puts a new empty pattern into the one picked
- * (an entry with a pattern: a copy of it);
+/* (the user's pick) SONG's KNOB 2 has the free numbers too (dim): OCT+ copies into the one picked the entry's pattern,
+ * an empty entry's the one the track plays (a duplicate of it there), a track with nothing a new empty pattern;
  * a DRUM or DRUM-X track's NEW takes the first free in the last 16 (49 .. 64), another track's the first from 01 */
 static int test_song_free(void)
 {
     int bad = 0, ok;
     uint32_t k, f, d, e0, a, g;
-    char w[16];
+    char w[24];
     ui_power_on();
     lists_clear();
     k = song.sel;
     e0 = TSEL->eng_req;
     fresh_pattern(k, 50);
     bank_put(k, 0, 0);                               /* T1: A a pattern, the track on it; B empty */
+    a = ent_pat(k, 0);
     f = pool_alloc(NTRK);
     go_page(GR_SONG);
     frame();
     turn(EN_K1, -16);
     turn(EN_K1, 1);
     turn(EN_K2, (int32_t)f + 3);                     /* (B: --, NEW, REST, 01 .. : the first free) */
-    str_cpy(w, "NEW ", sizeof w);
-    pat_num(w + 4, f);
-    ok = f < NPAT && sg.entry == 1u && song_pick() == f + 1u && !pool_used(f) && str_eq(song_act_name(), w) && act_ready();
+    str_cpy(w, "COPY ", sizeof w);
+    pat_num(w + 5, a);
+    str_cpy(w + 7, " TO ", sizeof w - 7u);
+    pat_num(w + 11, f);
+    ok = a < NPAT && f < NPAT && sg.entry == 1u && song_pick() == f + 1u && !pool_used(f) &&
+         str_eq(song_act_name(), w) && act_ready();
     press(B_OCTUP);
-    str_cpy(w, "T1 B NEW ", sizeof w);
-    pat_num(w + 9, f);
-    ok &= ent_pat(k, 1) == f && pool_used(f) && pool_len(f) == (uint32_t)TSEL->p[P_SLEN] && msg_is(w) && !song_pick();
-    bad += check("(the user's pick) SONG's KNOB 2: a free number (dim), OCT+ a new empty pattern in it", ok);
-    a = ent_pat(k, 0);
+    str_cpy(w, "COPIED ", sizeof w);
+    pat_num(w + 7, a);
+    str_cpy(w + 9, " TO ", sizeof w - 9u);
+    pat_num(w + 13, f);
+    ok &= ent_pat(k, 1) == f && ent_pat(k, 0) == a && trk_pat(k) == a && pool_used(f) && pool_len(f) == pool_len(a) &&
+          msg_is(w) && !song_pick();
+    bad += check("(the user's pick) SONG's KNOB 2: a free number (dim), OCT+ on an empty entry duplicates the track's pattern there", ok);
     g = pool_alloc(NTRK);
     turn(EN_K1, -1);                                 /* (A: its pattern copied into a free number picked) */
     sg.pick = g + 1u;
@@ -9697,21 +9703,32 @@ static int test_song_free(void)
     pat_num(w + 5, a);
     str_cpy(w + 7, " TO ", sizeof w - 7u);
     pat_num(w + 11, g);
-    ok = sg.entry == 0u && a < NPAT && g < NPAT && str_eq(song_act_name(), w) && act_ready();
+    ok = sg.entry == 0u && g < NPAT && str_eq(song_act_name(), w) && act_ready();
     press(B_OCTUP);
     ok &= ent_pat(k, 0) == g && pool_used(g) && pool_used(a) && pool_len(g) == pool_len(a) && !song_pick();
     bad += check("  on an entry with a pattern: OCT+ copies it into the free number", ok);
-    turn(EN_K1, 1);
+    turn(EN_K1, 2);
+    trk_pid[k] = 0;                                  /* (C empty, the track on nothing: a new empty pattern) */
+    track_defaults_steps(TSEL);
+    g = pool_alloc(NTRK);
+    sg.pick = g + 1u;
+    sg.pick_at = 1u + k * 16u + 2u;
+    str_cpy(w, "NEW ", sizeof w);
+    pat_num(w + 4, g);
+    ok = sg.entry == 2u && str_eq(song_act_name(), w);
+    press(B_OCTUP);
+    ok &= ent_pat(k, 2) == g && pool_used(g) && pool_len(g) == (uint32_t)TSEL->p[P_SLEN];
+    bad += check("  the track on nothing: a new empty pattern in it", ok);
     set_engine_of(TSEL, ENGI_DRUM);
     d = pool_alloc(k);
     ok = d >= NPAT - PAT_DRUMS && d < NPAT && pat_free(d) && pool_alloc(NTRK) < NPAT - PAT_DRUMS;
     turn(EN_K1, 1);
-    turn(EN_K2, 1);                                  /* (C empty: NEW first) */
+    turn(EN_K2, 1);                                  /* (D empty: NEW first) */
     str_cpy(w, "NEW ", sizeof w);
     pat_num(w + 4, d);
-    ok &= sg.entry == 2u && song_pick() == SPICK_NEW && str_eq(song_act_name(), w);
+    ok &= sg.entry == 3u && song_pick() == SPICK_NEW && str_eq(song_act_name(), w);
     press(B_OCTUP);
-    ok &= ent_pat(k, 2) == d && pool_used(d);
+    ok &= ent_pat(k, 3) == d && pool_used(d);
     set_engine_of(TSEL, e0);
     ok &= pool_alloc(k) == pool_alloc(NTRK);
     bad += check("  a DRUM track's NEW: the first free from 49; another track's from 01", ok);

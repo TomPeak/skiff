@@ -1786,8 +1786,10 @@ static int song_put(uint32_t k, uint32_t e, uint32_t p)
     uint8_t nid[NENT];
     char b[24], c[4];
     if (p && p <= NPAT && pat_free(p - 1u)) {     /* ((the user's pick) a free number: the entry's pattern copied */
-        n = p - 1u;                                /*  into it, an empty entry a NEW one there) */
-        p = id == PAT_NONE ? SPICK_NEW : SPICK_COPY;
+        n = p - 1u;                                /*  into it, an empty entry's the one the track plays, none */
+        if (id == PAT_NONE && !trk_keep(k))        /*  a NEW one there) */
+            id = trk_pat(k);
+        p = id == PAT_NONE ? SPICK_NEW : id == n ? n + 1u : SPICK_COPY;   /* (its steps kept into n: n itself) */
     }
     if (p == SPICK_NEW) {
         bank_poll();
@@ -1830,7 +1832,7 @@ static int song_put(uint32_t k, uint32_t e, uint32_t p)
         nid[0] = (uint8_t)((n < NPAT ? n : pool_alloc_after(id)) + 1u);
     }
     for (j = b0; j <= b1; j++) {                   /* (each part's copy, a REST as it is; the entries named after) */
-        uint32_t o = ent_pat(k, j);
+        uint32_t o = b0 == b1 ? id : ent_pat(k, j);
         if (!nid[j - b0]) {
             nid[j - b0] = (uint8_t)PAT_REST;
             continue;

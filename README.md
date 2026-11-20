@@ -106,7 +106,8 @@ fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_i
 
 - **KNOB 2 lists every number, 01–64:** the used patterns as before, the free ones dim. OCT+ on a free one copies the
   entry's pattern, its steps and all, to that number and puts the copy on the entry (COPY 03 TO 05); on an empty entry
-  it puts a new empty pattern there (NEW 05). Either way you choose where it goes.
+  it copies the pattern the track is playing (COPY 03 TO 05 too), and only a track with no pattern gets a new empty
+  one (NEW 05). Either way you choose where it goes.
 - **The drum patterns live in 49–64:** a new pattern for a DRUM or DRUM-X track (NEW, a pattern a track keeps) takes
   the first free number from 49 on; the other tracks' start from 01 (and fill 49–64 only when the rest is full).
 
