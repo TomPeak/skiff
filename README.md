@@ -14,6 +14,10 @@ synths and drums, patterns and songs, live performance, and a screen that shows 
   <img src="https://img.shields.io/badge/hardware-M--VAVE%20FM--1%20%7C%20SMK--37%20Pro-555" alt="Hardware: M-VAVE FM-1 | SMK-37 Pro">
 </p>
 
+<p align="center"><b>The Tom Peak version:</b> notes added and deleted with the keys on NOTES, your pick of a
+free pattern number on SONG, the drum patterns in 49–64, the APC mini mk2 in the editor and apcconnect, Skiff for
+iPad · <a href="#whats-new-in-the-tom-peak-version">what's new in it</a></p>
+
 <p align="center"><b>New in 2.7:</b> the Screen tab goes full screen, works the FM-1 from the page (mouse, touch or
 keyboard) and comes to the SMK-37, the editor's Sequencer as a piano roll, SYNC OUT for Pocket Operators, and fixes: the phaser's squeal, the
 filter on spread voices, TRIO's and SUB BASS's clicks, the editor's stray entries ·
@@ -82,10 +86,10 @@ Skiff is free software, a fork of [Felucca](https://github.com/hugelton/Felucca)
 keeps Felucca's engines, sound and file formats, so Felucca's sounds and projects load in Skiff. Skiff is not
 Felucca: please report Skiff's behaviour [here](https://github.com/illuminus5/skiff/issues), not in Felucca's Issues.
 
-## This fork: what differs from the official Skiff
+## What's new in the Tom Peak version
 
 This is [TomPeak/skiff](https://github.com/TomPeak/skiff), the official [illuminus5/skiff](https://github.com/illuminus5/skiff)
-(2.7, merged in) with these changes on top. The releases and install links below are still the official ones: to run this
+(2.7, merged in) with these changes on top: what it does that the official Skiff doesn't. The releases and install links below are still the official ones: to run this
 fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_install.py`.
 
 **On the unit, SEQ › NOTES (the piano roll) with REC off**
@@ -107,7 +111,6 @@ fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_i
 
 **In the Skiff Editor**
 
-- **The Sequencer as a piano roll** with the drum lanes and a velocity lane under them.
 - **Akai APC mini mk2:** the pads in the tracks' own colours; **SHIFT** a pattern mode (the 64 patterns on the pads,
   in two-row colour bands, 49–64 the drum patterns; bottom buttons pick the track, a pad plays its pattern); **DRUM**
   (the sixth side button) a drum mode (a DRUM track's lanes as red level bars, the faders their levels, the buttons
