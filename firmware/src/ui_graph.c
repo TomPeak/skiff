@@ -691,17 +691,13 @@ static void graph_roll(const track_t *t, uint16_t c)
                             b < NSTEP && (t->step[b].flags & SF_ACCENT), &y, 1u);
                 }
             }
-            if (s == si) {                            /* ((Skiff) where it plays: its NUDGE, inside the grid) */
-                int32_t bx = clamp(x + 2 + st->nudge * PR_CW / 64, PR_X0 + 1, PR_X0 + gw - 10);
-                for (v = 0; !k && si == ui.cursor && glow_on(t) && v < st->n; v++)
-                    if (!step_tied(st, v))
-                        pr_glow(st->note[v], bx, 9);
-                pr_bars(&pk, bx, 9, col, (st->flags & SF_ACCENT) != 0u, &y, step_ratchet(st));
-            } else {                                    /* a TIE: the bars on through the gap before */
+            {                                         /* ((Skiff) where it plays: its NUDGE, inside the grid; */
+                uint32_t tie = s != si;                 /* a TIE: the bars on through the gap before) */
+                int32_t bx = tie ? x - 1 : clamp(x + 2 + st->nudge * PR_CW / 64, PR_X0 + 1, PR_X0 + gw - 10);
                 for (v = 0; !k && s == ui.cursor && glow_on(t) && v < st->n; v++)
-                    if (!step_tied(st, v))              /* ((2.2) the cursor's, going on) */
-                        pr_glow(st->note[v], x, 11);
-                pr_bars(&pk, x - 1, 12, col, (st->flags & SF_ACCENT) != 0u, &y, 1u);
+                    if (!step_tied(st, v))              /* ((2.2) the cursor's) */
+                        pr_glow(st->note[v], bx + (int32_t)tie, 9 + 2 * (int32_t)tie);
+                pr_bars(&pk, bx, 9 + 3 * (int32_t)tie, col, (st->flags & SF_ACCENT) != 0u, &y, tie ? 1u : step_ratchet(st));
             }
         }
         if ((st->flags & SF_SLIDE) && step_ratchet(st) == 1u &&   /* (a ratcheted step never slides out) */
