@@ -2905,6 +2905,7 @@ function makeMockDevice(opt = {}) {
   const muteTo = (k, m) => {
     const tp = st.tracks[k].p;
     st.muteArm[k] = 0;
+    st.sceneLast = -1;                          /* (bank.c mute_to: the scene left; a recall sets it after) */
     if (!st.playing) tp[40] = m ? 1 : 0;
     else if (!!tp[40] !== !!m) st.muteArm[k] = m ? 2 : 1;
   };
@@ -3187,8 +3188,6 @@ function makeMockDevice(opt = {}) {
         } else if (op === 3) { if (st.muteArm[v]) st.muteArm[v] = 0; else muteTo(v, st.tracks[v].p[40] ? 0 : 1); }
         else if (op === 4) { st.staged.fill(127); st.muteArm.fill(0); }
         else if (op === 5) st.launch = v;
-        const sl = st.scenes[st.sceneLast];   /* (bank.c scene_now: a MUTE not the scene's, a staged one as it will be) */
-        if (sl && sl.mutes.some((m, k) => m !== (st.muteArm[k] ? st.muteArm[k] - 1 : st.tracks[k].p[40] ? 1 : 0))) st.sceneLast = -1;
         const bits = st.scenes.reduce((m, x, i) => m | (x ? 1 << i : 0), 0);
         [a.length ? op : 0, rc, st.launch, st.sceneLast < 0 ? 127 : st.sceneLast, bits & 127, bits >> 7 & 127, bits >> 14 & 3].forEach(b);
         st.tracks.forEach((x, k) => { b(x.p[40] ? 1 : 0); b(st.muteArm[k]); });
@@ -3260,6 +3259,7 @@ function makeMockDevice(opt = {}) {
         if (a.length >= 4) {
           t.p[0] = clamp(v14dec(a[1], a[2]), 0, 127);
           t.p[40] = a[3] ? 1 : 0;
+          st.sceneLast = -1;
         }
         b(a[0]); v(t.p[0]); b(t.p[40] ? 1 : 0);
         break;

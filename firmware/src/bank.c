@@ -1452,6 +1452,7 @@ static void mute_to(uint32_t k, uint32_t m)
     uint32_t l = launch_mode();
     k %= NTRK;
     mute_arm[k] = 0;
+    scene_forget();                                /* ((Tom Peak) a scene's recall: lit after) */
     bk.gen++;
     if (!song.playing) {
         trk[k].p[P_MUTE] = (int16_t)m;
@@ -1497,7 +1498,8 @@ static void mute_switch(uint32_t k)
 #define SCENE_MEM(i) (lists.scene[(i)])
 _Static_assert(5u * SCENES + 2u == PROJ_SCENES && 3u * SCENES + 2u == PROJ_SC2, "the scenes' bytes");
 static uint8_t scene_last = 0xFFu;                 /* the scene recalled or stored last (its key lit); 0xFF none */
-static void scene_forget(void) { scene_last = 0xFFu; }   /* (a project load: its own scenes; the scene left) */
+static void scene_forget(void) { scene_last = 0xFFu; }   /* (a project load: its own scenes; (Tom Peak) the scene
+                                                         * left: entry_go, a MUTE turned (mute_to, GLO, MIXER, the editor)) */
 static uint32_t scene_bits(uint32_t s)
 {
     s %= SCENES;
@@ -1523,18 +1525,7 @@ static uint32_t scene_slot(uint32_t s, uint32_t k)
     uint32_t c = scene_trk(s, k % NTRK) & 31u;
     return c && c <= BK_SLOTS ? c - 1u : BK_NONE;
 }
-/* the scene lit: (Tom Peak) none once a track's MUTE (a staged one as it will be) is not the scene's, however it turned
- * (PERFORM, GLO, MIXER, the editor); a track put on another entry: entry_go */
-static uint32_t scene_now(void)
-{
-    uint32_t k, e;
-    for (k = 0; scene_last < SCENES && k < NTRK; k++) {
-        e = scene_trk(scene_last, k);
-        if (e != SCENE_NOT && e >> 5 != (mute_arm[k] ? mute_arm[k] - 1u : trk[k].p[P_MUTE] != 0))
-            scene_forget();
-    }
-    return scene_last;
-}
+static uint32_t scene_now(void) { return scene_last; }
 /* the tracks as they are now into scene s: the entry each is on (bank_cur; none: on no entry's pattern), each MUTE */
 static void scene_store(uint32_t s)
 {
@@ -1585,20 +1576,26 @@ static int scene_recall(uint32_t s)
     bk.gen++;
     return rc;
 }
+/* "SCENE n" for scene s into b (12 bytes) */
+static void scene_tag(char *b, uint32_t s)
+{
+    str_cpy(b, "SCENE ", 8u);
+    fmt_int(b + 6, (int32_t)(s % SCENES) + 1);
+}
 /* scene s stored, said ((Skiff W3) the dialog's OCT+, the editor's PERFORM too) */
 static void scene_saved(uint32_t s)
 {
-    char b[24] = "SCENE ";
-    fmt_int(b + 6, (int32_t)(s % SCENES) + 1);
+    char b[12];
+    scene_tag(b, s);
     scene_store(s);
     ui_say(b, " SAVED");
 }
 /* scene s recalled, said: scene_recall's rc ((Skiff W3) the editor's PERFORM too) */
 static int scene_go(uint32_t s)
 {
-    char b[24] = "SCENE ";
+    char b[12];
     int staged = song.playing, rc;
-    fmt_int(b + 6, (int32_t)(s % SCENES) + 1);
+    scene_tag(b, s);
     rc = scene_recall(s);
     if (rc == 1)
         ui_say(b, " EMPTY");
@@ -1632,11 +1629,14 @@ static int stage_pending(void)
 /* track k to its entry e (SONG's OCT+, PERFORM's keys: the selected track; (Skiff W3) the editor's LIST PLAY): at once
  * stopped, staged playing (LAUNCH says when it comes in); what happened, said (a load takes no undo copy: what the track
  * had is kept); bank_switch's rc. (Tom Peak) The tracks left the scene: none lit (a scene's recall: bank_switch) */
+static void song_tag(char *b, uint32_t k, uint32_t e);
 static int entry_go(uint32_t k, uint32_t e)
 {
     uint32_t b0, b1;
-    char b[8] = {'T', (char)('1' + k % NTRK), ' ', (char)('A' + (ent_block(k, e, &b0, &b1) ? b0 : e % NENT)), 0};
-    int staged = song.playing, rc = bank_switch(k, e);   /* ((2.0, #44) a chain: its first part's, said) */
+    char b[8];
+    int staged = song.playing, rc;
+    song_tag(b, k, ent_block(k, e, &b0, &b1) ? b0 : e);
+    rc = bank_switch(k, e);   /* ((2.0, #44) a chain: its first part's, said) */
     if (rc == 1) {
         ui_say(b, " EMPTY");
         return rc;

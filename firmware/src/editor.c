@@ -942,6 +942,7 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
         if (na >= 4u) {
             *lv = (int16_t)clamp(ed_rv(a + 1), 0, 127);
             t->p[P_MUTE] = (int16_t)(a[3] ? 1 : 0);
+            scene_forget();
             ed_known(a[0], P_LEVEL);                       /* the editor's own change: no push */
             ed_known(a[0], P_MUTE);
             ui.force = 1;

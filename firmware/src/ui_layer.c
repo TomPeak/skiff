@@ -562,8 +562,10 @@ static void mute_keys(uint32_t l, uint32_t keys)
             mk.cut &= (uint8_t)~b;
             if (now - mk.t0[p] < hold && mk.l[p] == LAYER_PERF)
                 mute_switch(p);
-            else if (now - mk.t0[p] < hold)
+            else if (now - mk.t0[p] < hold) {
                 trk[p].p[P_MUTE] = (int16_t)!trk[p].p[P_MUTE];
+                scene_forget();
+            }
         } else if ((mk.dn & b) && mk.l[p] == LAYER_PERF && now - mk.t0[p] >= hold) {
             mk.cut |= (uint8_t)b;                       /* (PERFORM: a hold cuts from here) */
         }
@@ -581,6 +583,7 @@ static void layer_key(uint32_t l, uint32_t k)
         } else if (w == GW_ALL) {
             for (i = 0; i < NTRK; i++)
                 trk[i].p[P_MUTE] = 0;
+            scene_forget();
         } else if (w == GW_FILL) {
             lys.fill |= 1u << k;                        /* (Skiff) D4: FILL while held (layer_keys) */
         } else if (w == GW_TAP) {

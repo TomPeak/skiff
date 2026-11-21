@@ -498,6 +498,7 @@ static void tracks_edit(uint32_t slot, int32_t steps)
     switch (slot) {
     case 3:
         t->p[P_MUTE] = (int16_t)(steps > 0);
+        scene_forget();
         ml_knob(t, P_MUTE);                             /* ((1.3) MIDI LEARN: picked) */
         return;
     case 0:
