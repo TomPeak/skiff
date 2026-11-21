@@ -1497,7 +1497,7 @@ static void mute_switch(uint32_t k)
 #define SCENE_MEM(i) (lists.scene[(i)])
 _Static_assert(5u * SCENES + 2u == PROJ_SCENES && 3u * SCENES + 2u == PROJ_SC2, "the scenes' bytes");
 static uint8_t scene_last = 0xFFu;                 /* the scene recalled or stored last (its key lit); 0xFF none */
-static void scene_forget(void) { scene_last = 0xFFu; }   /* (a project load: its own scenes) */
+static void scene_forget(void) { scene_last = 0xFFu; }   /* (a project load: its own scenes; the scene left) */
 static uint32_t scene_bits(uint32_t s)
 {
     s %= SCENES;
@@ -1523,7 +1523,18 @@ static uint32_t scene_slot(uint32_t s, uint32_t k)
     uint32_t c = scene_trk(s, k % NTRK) & 31u;
     return c && c <= BK_SLOTS ? c - 1u : BK_NONE;
 }
-static uint32_t scene_now(void) { return scene_last; }
+/* the scene lit: (Tom Peak) none once a track's MUTE (a staged one as it will be) is not the scene's, however it turned
+ * (PERFORM, GLO, MIXER, the editor); a track put on another entry: entry_go */
+static uint32_t scene_now(void)
+{
+    uint32_t k, e;
+    for (k = 0; scene_last < SCENES && k < NTRK; k++) {
+        e = scene_trk(scene_last, k);
+        if (e != SCENE_NOT && e >> 5 != (mute_arm[k] ? mute_arm[k] - 1u : trk[k].p[P_MUTE] != 0))
+            scene_forget();
+    }
+    return scene_last;
+}
 /* the tracks as they are now into scene s: the entry each is on (bank_cur; none: on no entry's pattern), each MUTE */
 static void scene_store(uint32_t s)
 {
@@ -1620,7 +1631,7 @@ static int stage_pending(void)
 
 /* track k to its entry e (SONG's OCT+, PERFORM's keys: the selected track; (Skiff W3) the editor's LIST PLAY): at once
  * stopped, staged playing (LAUNCH says when it comes in); what happened, said (a load takes no undo copy: what the track
- * had is kept); bank_switch's rc */
+ * had is kept); bank_switch's rc. (Tom Peak) The tracks left the scene: none lit (a scene's recall: bank_switch) */
 static int entry_go(uint32_t k, uint32_t e)
 {
     uint32_t b0, b1;
@@ -1634,6 +1645,7 @@ static int entry_go(uint32_t k, uint32_t e)
         ui_way("PATTERNS FULL", WAY_PATTERNS);
         return rc;
     }
+    scene_forget();
     if (staged)
         ui_say(b, LAUNCH_AT[launch_mode()]);
     else

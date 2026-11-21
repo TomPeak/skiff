@@ -2866,6 +2866,7 @@ function makeMockDevice(opt = {}) {
     const p = st.lists[k][e][0];
     if (!p || (p !== PAT_REST && !st.pool[p - 1])) return 1;
     if (st.playing) st.staged[k] = e; else { st.cur[k] = e; st.pid[k] = p === PAT_REST ? 0 : p; st.staged[k] = 127; }
+    st.sceneLast = -1;                          /* (bank.c entry_go: the scene left; a recall sets it after) */
     return 0;
   };
   /* ((2.0) bank.c song_put's COPY+) entry e's pattern (its chain: all of it) into the first empty entries in a row after
@@ -3186,6 +3187,8 @@ function makeMockDevice(opt = {}) {
         } else if (op === 3) { if (st.muteArm[v]) st.muteArm[v] = 0; else muteTo(v, st.tracks[v].p[40] ? 0 : 1); }
         else if (op === 4) { st.staged.fill(127); st.muteArm.fill(0); }
         else if (op === 5) st.launch = v;
+        const sl = st.scenes[st.sceneLast];   /* (bank.c scene_now: a MUTE not the scene's, a staged one as it will be) */
+        if (sl && sl.mutes.some((m, k) => m !== (st.muteArm[k] ? st.muteArm[k] - 1 : st.tracks[k].p[40] ? 1 : 0))) st.sceneLast = -1;
         const bits = st.scenes.reduce((m, x, i) => m | (x ? 1 << i : 0), 0);
         [a.length ? op : 0, rc, st.launch, st.sceneLast < 0 ? 127 : st.sceneLast, bits & 127, bits >> 7 & 127, bits >> 14 & 3].forEach(b);
         st.tracks.forEach((x, k) => { b(x.p[40] ? 1 : 0); b(st.muteArm[k]); });

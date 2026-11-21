@@ -845,6 +845,18 @@ static int scenes(void)
     bad += check("  recalled playing (BAR): staged, then all of it on bar 2's first step", ok);
     ok = scene_recall(5) == 1 && scene_recall(2) == 0 && bank_next(0) == BK_NONE;   /* (all as it says: nothing) */
     bad += check("  an empty scene: nothing; the scene it plays: nothing staged", ok);
+    ok = scene_now() == 2u && entry_go(0, 3) == 1 && scene_now() == 2u;   /* (Tom Peak) an empty entry: still in it */
+    ok &= entry_go(0, 2) == 0 && scene_now() == 0xFFu;
+    bad += check("  (Tom Peak) a track put on another entry: the scene left, none lit", ok);
+    ok = scene_recall(2) == 0 && scene_now() == 2u && song_put(0, 0, ent_pat(1, 1) + 1u) == 0 && scene_now() == 0xFFu;
+    bad += check("  .. another pattern into the entry a track is on: none lit", ok);
+    ok = scene_recall(2) == 0 && scene_now() == 2u;
+    trk[1].p[P_MUTE] = 1;                         /* (as GLO's black key or the MIXER turns it) */
+    ok &= scene_now() == 0xFFu;
+    trk[1].p[P_MUTE] = 0;
+    ok &= scene_now() == 0xFFu;                   /* (back as it was: still none, the scene was left) */
+    ok &= scene_recall(2) == 0 && (mute_switch(3), scene_now() == 0xFFu);
+    bad += check("  (Tom Peak) a track's MUTE turned: the scene left, none lit (back again too)", ok);
     project_capture(&pj);                         /* (phase 5) the project's: in SKF2, back with a load */
     ok = proj_pack2(&w, &pj, PROJ_SKF) && proj_import(&got, &w, PROJ_SKF->size) && !memcmp(got.scene, lists.scene, PROJ_SCENES);
     memset(lists.scene, 0, sizeof lists.scene);   /* (another project's: none) */
