@@ -30,11 +30,13 @@ Packages: 20 interleave blocks (FM-1, Felucca, the SMK build) or more (the stock
 markers are 0x7D); the count is detected and checked with the files' CRCs.
 """
 import argparse
+import faulthandler
 import hashlib
 import os
 import queue
 import re
 import sys
+import threading
 import time
 
 HS_QUERY = bytes([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
@@ -58,7 +60,7 @@ PORT_RE = re.compile(r"fm-1|smk|elite|mke-p37|starry|felucca|ota|composite|sinco
 # seconds; the tests shorten them
 DELAY = {"open": 0.3, "start": 2.0, "reply": 0.01, "loader": 3.0, "reboot": 3.0, "retry": 1.0,
          "poll": 1.0, "hs": 1.0, "idle_check": 8.0, "idle_write": 180.0,
-         "wait_loader": 30.0, "wait_reboot": 40.0, "wait_resume": 120.0}
+         "wait_loader": 30.0, "wait_reboot": 40.0, "wait_resume": 120.0, "watchdog": 20.0}
 RESUME_MAX = 5                              # write attempts (the first and the resumes after a drop)
 
 SMK_MODELS = ("SMK-37 Pro", "SMK-37 Elite", "MKE-P37")
@@ -74,6 +76,24 @@ def needs_stock_update(text):
 
 EXIT = {"usage": 2, "badpkg": 2, "notfound": 3, "model": 6, "lost": 4, "stopped": 4, "badreq": 4, "stock": 7,
         "noloader": 5, "noreturn": 5, "mismatch": 6}
+
+
+def watchdog(secs, msg, rc):
+    """leave after secs with msg and rc, unless the returned cancel() comes first: (macOS) a MIDI call that never
+    returns once the device has restarted (seen twice after a write, the cause not caught). If even this thread
+    cannot run (the call holding the interpreter), faulthandler dumps every thread's stack and leaves, from C"""
+    def leave():
+        print(f"\nerror: {msg}", file=sys.stderr, flush=True)
+        os._exit(rc)
+    t = threading.Timer(secs, leave)
+    t.daemon = True
+    t.start()
+    faulthandler.dump_traceback_later(secs + 10, exit=True, file=sys.__stderr__)
+
+    def cancel():
+        t.cancel()
+        faulthandler.cancel_dump_traceback_later()
+    return cancel
 
 
 class InstallError(Exception):
@@ -554,11 +574,17 @@ class Updater:
 
     def verify(self, product, step):
         step("reboot")
-        time.sleep(DELAY["reboot"])
-        back = self.wait_for(lambda i: not i.loader and same_model(i.text, product), DELAY["wait_reboot"])
-        if not back:
-            raise InstallError("noreturn", "the device did not come back: power-cycle it")
-        back.link.close()
+        stop = watchdog(DELAY["reboot"] + DELAY["wait_reboot"] + DELAY["watchdog"],
+                        "written, but the check after the restart got stuck: see the device with --info "
+                        "(power-cycle it if it does not start)", EXIT["noreturn"])
+        try:
+            time.sleep(DELAY["reboot"])
+            back = self.wait_for(lambda i: not i.loader and same_model(i.text, product), DELAY["wait_reboot"])
+            if not back:
+                raise InstallError("noreturn", "the device did not come back: power-cycle it")
+            back.link.close()
+        finally:
+            stop()
         if back.id.text != product:
             raise InstallError("mismatch", f"written, but the device reports {back.id.text} (expected {product})")
         step("done", back.id.text)

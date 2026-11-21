@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import fm1_install as I  # noqa: E402
 
 I.DELAY.update(open=0, start=0.01, reply=0, loader=0.01, reboot=0.01, retry=0.02, poll=0.05, hs=0.1,
-               idle_check=0.4, idle_write=0.4, wait_loader=2, wait_reboot=2, wait_resume=0.5)
+               idle_check=0.4, idle_write=0.4, wait_loader=2, wait_reboot=2, wait_resume=0.5, watchdog=1)
 failed = 0
 
 
@@ -555,6 +555,18 @@ def two_units():
            f"two units, the other one {what} and listed first: the package's own unit, loader and return")
 
 
+def watchdogs():
+    """the check after the restart can't hang for good (a MIDI call that never returns on macOS): the watchdog
+    leaves with its message and code; cancelled in time, nothing (each in a process of its own: it ends it)"""
+    def run(code):
+        return subprocess.run([sys.executable, "-c", f"import sys, time; sys.path.insert(0, {str(ROOT / 'tools')!r}); "
+                               f"import fm1_install as I; {code}"], capture_output=True, text=True, timeout=30)
+    r = run("I.watchdog(0.2, 'stuck', 5); time.sleep(10)")
+    ok(r.returncode == 5 and "error: stuck" in r.stderr, "watchdog: a call that never returns: its message, rc 5")
+    r = run("I.watchdog(0.2, 'stuck', 5)(); time.sleep(0.6)")
+    ok(r.returncode == 0 and "stuck" not in r.stderr, "  cancelled in time: nothing")
+
+
 wire()
 installs()
 errors()
@@ -572,6 +584,7 @@ ok(all(I.PORT_RE.search(n) for n in ("SMK-37 Elite", "MKE-P37", "STARRYKEY-37 PL
    "port names: every SMK model and Felucca probed")
 against_js()
 official()
+watchdogs()
 shutil.rmtree(TMP, ignore_errors=True)
 print(f"INSTALL TESTS FAILED ({failed})" if failed else "install tests passed")
 sys.exit(1 if failed else 0)
