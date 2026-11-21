@@ -771,6 +771,7 @@ static uint32_t layer_oct(uint32_t pressed, uint32_t oct)
                 trk[k].p[P_MUTE] = lys.v[k];
                 trk[k].p[P_LEVEL] = lys.v[NTRK + k];
             }
+            scene_forget();                             /* ((Tom Peak) the MUTEs as they were: the scene left) */
             song.g[G_BPM] = lys.v[LY_BPM];
             ui_message("UNDONE: MIX");
         } else {
