@@ -660,7 +660,9 @@ when the track's engine is not the saved one).
   1341 the globals, a count, then each value in 16 bits, low byte first; then each of the 6 tracks: engine, preset,
   a reserved byte (0), a count n, then n values (value + 64) by SID. 2.0's SIDs are the parameter ids (0..134), its
   globals' the global ids (0..26). A reader takes the ids it knows: a newer record's others are read past, an older
-  one's missing ones load at their defaults. Zeros up to the name at 2544..2555, the hash last. A save (and the
+  one's missing ones load at their defaults. Zeros up to the name at 2544..2555, the hash last. (Tom Peak's fork)
+  2448..2543 the scenes' DRUM lane mutes: 6 bytes a scene, a byte a track (bit n: lane n muted, KICK .. BELL); a
+  scene holds them when bit 14 of its T5/T6 bytes is set (Skiff reads past both). A save (and the
   autosave) writes SKF4; an SKF3 or SKF2 loads as before and keeps its format where it is stored (a rename, a backup
   restore). Skiff before 2.0 shows an SKF4 slot as empty.
 - **The DRUM-X kit (Skiff phase 7).** One kit per project, for every DRUM-X track (engine 14): 8 lanes (KICK SNARE

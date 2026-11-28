@@ -599,6 +599,7 @@ static void layer_key(uint32_t l, uint32_t k)
     } else if (l == LAYER_EDIT && p < NLANE && drum_track(TSEL)) {   /* ((1.3, from Felucca 1.4.1) black keys 1..8:
                                                          * the lanes' MUTE, latched (eng_drum.c drum_mute) */
         drum_mute[song.sel] ^= (uint8_t)(1u << p);
+        scene_forget();                                 /* ((Tom Peak) a scene holds them: left) */
         ui_say(drum_lane_name(TSEL, p), (drum_mute[song.sel] >> p) & 1u ? " MUTED" : " ON");
         ui.force = 1;
     } else if (l == LAYER_REC) {
@@ -735,6 +736,7 @@ static uint32_t layer_oct(uint32_t pressed, uint32_t oct)
     }
     if ((mine & 2u) && lys.l == LAYER_EDIT && drum_track(TSEL)) {   /* ((2.0.1, #54) OCT+: every lane on at once, as a */
         drum_mute[song.sel] = 0;                        /* build-up's release (the black keys mute them one by one) */
+        scene_forget();
         ui_message("ALL LANES ON");
         ui.force = 1;
     }
@@ -749,6 +751,7 @@ static uint32_t layer_oct(uint32_t pressed, uint32_t oct)
                 undo_step(0);                           /* (the copy from its first load) */
             lys.loaded = 0;
             memcpy(drum_mute, lys.mute, sizeof drum_mute);   /* ((1.3) the lanes' mutes as it opened) */
+            scene_forget();
         } else if (lys.l == LAYER_SEQ || lys.l == LAYER_REC) {
             track_t *t = &trk[lys.trk % NTRK];
             if (lys.loaded)                             /* (SAVE held then: the tools / the clear again) */

@@ -134,7 +134,7 @@ typedef struct {
     uint8_t snd[NTRK][NENT][2];                /* ((2.0, #30) SKF4) each entry's sound (ui.c lists.snd) */
     uint8_t cur[NTRK];                         /* (SKF2) the entry each track is on */
     uint8_t song;                              /* (SKF2) SONG on */
-    uint8_t scene[PROJ_SCENES];                /* (SKF2) the scenes (bank.c) */
+    uint8_t scene[PROJ_SCENES + PROJ_SCENE_LM];   /* (SKF2) the scenes (bank.c); ((Tom Peak) SKF4) their lane mutes */
     uint8_t dx_on;                             /* (Skiff phase 7) 1: dx is the project's DRUM-X kit; 0 none (the factory's) */
     dx_lane_t dx[DV_NLANE];                    /* (SKF3) the DRUM-X kit (drumx_voice.c dx_kit), one for every DRUM-X track */
     uint32_t sum;
@@ -199,14 +199,17 @@ static const proj_fmt_t PROJ_SKF3 = {PROJ_MAGIC3, PROJ_STORE3, 6u, PROJ_SCENES, 
  * the DRUM-X kit (PROJ_DX_MARK
  * and its lanes; 0: the factory's), the FM6 patches; then the globals by GSID and each track's engine, preset, user
  * slot + 1 (#20's, 0 none) and parameters by SID, the counts the record's (a newer one's past ours passed over, an
- * older one's missing at their defaults); the name, the hash last. Room for about 50 more parameters a track */
+ * older one's missing at their defaults); (Tom Peak) the scenes' lane mutes at PROJ_LM_AT, just before the name
+ * (a record of before: 0 there, its scenes holding none; firmware before reads past them); the name, the hash last.
+ * Room for about 35 more parameters a track */
 #define PROJ_MAGIC4 0x534B4634u
 #define PROJ_STORE4 2560u
 #define PROJ_LAYOUT4 1u
 #define PROJ_ENT4 10u
 static const proj_fmt_t PROJ_SKF4 = {PROJ_MAGIC4, PROJ_STORE4, 6u, PROJ_SCENES, 1u};
+#define PROJ_LM_AT (PROJ_STORE4 - 4u - PROJ_NAME_LEN - PROJ_SCENE_LM)
 _Static_assert(PROJ_ENT4 + NTRK * (NENT * 4u + 1u) + PROJ_SCENES + 2u + 1u + DV_NLANE * 11u + NTRK * FM6_PACKED +
-               1u + 2u * GSID_COUNT + NTRK * (4u + SID_COUNT) + PROJ_NAME_LEN + 4u <= PROJ_STORE4, "SKF4 holds it all");
+               1u + 2u * GSID_COUNT + NTRK * (4u + SID_COUNT) <= PROJ_LM_AT, "SKF4 holds it all");
 #define PROJ_SKF (&PROJ_SKF4)                  /* the format a save writes */
 #define PROJ_NAME_AT(f) ((f)->size - 4u - PROJ_NAME_LEN)
 #define PROJ_FM6_AT(f) (PROJ_NAME_AT(f) - (f)->nt * FM6_PACKED)
@@ -1032,6 +1035,7 @@ static int proj_pack4(project_store_t *out, const project_t *q)
         if (!(n = sid_put(b + pos, q->t[t].p))) return 0;
         pos += n;
     }
+    memcpy(b + PROJ_LM_AT, q->scene + PROJ_SCENES, PROJ_SCENE_LM);   /* ((Tom Peak) the scenes' lane mutes) */
     {
         char nm[PROJ_NAME_LEN + 1u];
         memcpy(b + PROJ_NAME_AT(&PROJ_SKF4), nm, proj_name_get(nm, (const uint8_t *)q->name));
@@ -1042,7 +1046,7 @@ static int proj_pack4(project_store_t *out, const project_t *q)
 /* (2.0) an SKF4 record (its magic and size checked: proj_fmt_of) -> q; 0 if it is not one this firmware reads */
 static int proj_unpack4(project_t *q, const uint8_t *b)
 {
-    uint32_t pos = PROJ_ENT4, end = PROJ_NAME_AT(&PROJ_SKF4), t, e, n, sum;
+    uint32_t pos = PROJ_ENT4, end = PROJ_LM_AT, t, e, n, sum;
     memcpy(&sum, b + PROJ_STORE4 - 4u, 4);
     if (b[8] != PROJ_LAYOUT4 || sum != proj_hash(b, PROJ_STORE4 - 4u)) return 0;
     memset(q, 0, sizeof *q); q->magic = PROJ_MAGIC; q->size = sizeof *q;
@@ -1090,9 +1094,10 @@ static int proj_unpack4(project_t *q, const uint8_t *b)
 #if FELUCCA_LEGACY
     chain_defaults(&q->chain);
 #endif
+    memcpy(q->scene + PROJ_SCENES, b + PROJ_LM_AT, PROJ_SCENE_LM);   /* ((Tom Peak) the scenes' lane mutes) */
     {
         char nm[PROJ_NAME_LEN + 1u];
-        memcpy(q->name, nm, proj_name_get(nm, b + end));
+        memcpy(q->name, nm, proj_name_get(nm, b + PROJ_NAME_AT(&PROJ_SKF4)));
     }
     q->sum = proj_sum(q);
     return 1;
@@ -1373,7 +1378,8 @@ static void project_capture(project_t *p)
     memcpy(p->snd, lists.snd, sizeof p->snd);      /* ((2.0, #30) the entries' sounds) */
     memcpy(p->cur, lists.cur, sizeof p->cur);
     p->song = lists.song;
-    memcpy(p->scene, lists.scene, sizeof p->scene);  /* (the scenes too: the project's) */
+    memcpy(p->scene, lists.scene, sizeof lists.scene);   /* (the scenes too: the project's) */
+    memcpy(p->scene + PROJ_SCENES, scene_lm, sizeof scene_lm);   /* ((Tom Peak) their lane mutes) */
     if (memcmp(dx_kit, DX_KIT_DEF, sizeof dx_kit)) {   /* (phase 7) the DRUM-X kit, when not the factory's (none: */
         p->dx_on = 1;                              /* the factory's when loaded; a project of before as it was) */
         memcpy(p->dx, dx_kit, sizeof p->dx);
@@ -1517,6 +1523,7 @@ static int project_restore_runtime(const project_t *input)
     memcpy(lists.cur, p->cur, sizeof lists.cur);
     lists.song = p->song;
     memcpy(lists.scene, p->scene, sizeof lists.scene);
+    memcpy(scene_lm, p->scene + PROJ_SCENES, sizeof scene_lm);
     scene_forget();
     memset(trk_pid, 0, sizeof trk_pid);
     motion_lost = 0;

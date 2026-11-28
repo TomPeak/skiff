@@ -111,6 +111,11 @@ fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_i
 - **The drum patterns live in 49–64:** a new pattern for a DRUM or DRUM-X track (NEW, a pattern a track keeps) takes
   the first free number from 49 on; the other tracks' start from 01 (and fill 49–64 only when the rest is full).
 
+**On the unit, PERFORM's scenes**
+
+- **A scene keeps the DRUM lanes' mutes too** (EDIT's black keys, every track's), saved with the project. Recalled,
+  they switch at once, playing or not; a scene stored before leaves the lanes as they are.
+
 **In the Skiff Editor**
 
 - **Akai APC mini mk2:** the pads in the tracks' own colours; **SHIFT** a pattern mode (the 64 patterns on the pads,

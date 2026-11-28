@@ -1476,6 +1476,8 @@ static struct {
     uint8_t song;                /* SONG_* (core.h): off, on, ((2.0, #47) once through) */
     uint8_t scene[PROJ_SCENES];
 } lists __attribute__((section(".pool")));
+static uint8_t scene_lm[PROJ_SCENE_LM];   /* (Tom Peak) the scenes' DRUM lane mutes (bank.c scene_*; off the POOL: its
+                                            * headroom) */
 static uint8_t trk_pid[NTRK] __attribute__((section(".pool")));   /* (.pool: off the ISR's merged globals) */
 _Static_assert(sizeof lists <= sizeof ((undo_t *)0)->step, "(2.5) an undo copy holds the song's lists (UNDO_LISTS)");
 static uint32_t ent_pat(uint32_t k, uint32_t e)        /* entry e of track k: its pattern id, PAT_NONE: empty (a REST) */
@@ -1509,6 +1511,7 @@ static void trk_bar(int32_t x0, int32_t y0, int32_t x1, int32_t y1)
 static void lists_clear(void)                          /* no lists, no patterns on the tracks */
 {
     memset(&lists, 0, sizeof lists);
+    memset(scene_lm, 0, sizeof scene_lm);
     memset(trk_pid, 0, sizeof trk_pid);
 }
 static uint8_t load_from;        /* a sound load (the outer one): the engine before it (load_end) */

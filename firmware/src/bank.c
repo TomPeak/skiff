@@ -1493,10 +1493,15 @@ static void mute_switch(uint32_t k)
  * MUTE bits; then 2 bytes, a bit for each scene kept; (phase 6) then 2 bytes a scene for T5 and T6: 5 bits each, their
  * MUTEs at bits 10 and 11, bit 15 set when the scene holds them (one stored with four tracks, SKF2's: T5 and T6 left as
  * they are). (Before phase 5 they were the settings', in favorites bytes no engine uses, factory[14][0] ..
- * factory[15][17]; (2.0) settings_persist.c clears them from a record of before Skiff's mark at [15][24]) */
+ * factory[15][17]; (2.0) settings_persist.c clears them from a record of before Skiff's mark at [15][24]).
+ * (Tom Peak) The DRUM lanes' mutes too (eng_drum.c drum_mute), every track's, in scene_lm: a byte a track a
+ * scene, bit 14 of its T5 T6 bytes set when it holds them (one stored before: the lanes left as they are). Recalled at
+ * once, playing or not (the EDIT layer's black keys turn them so too) */
 #define SCENES 16u
 #define SCENE_MEM(i) (lists.scene[(i)])
+#define SCENE_LM(i) (scene_lm[(i)])
 _Static_assert(5u * SCENES + 2u == PROJ_SCENES && 3u * SCENES + 2u == PROJ_SC2, "the scenes' bytes");
+_Static_assert(NTRK * SCENES == PROJ_SCENE_LM, "the scenes' lane mutes");
 static uint8_t scene_last = 0xFFu;                 /* the scene recalled or stored last (its key lit); 0xFF none */
 static void scene_forget(void) { scene_last = 0xFFu; }   /* (a project load: its own scenes; (Tom Peak) the scene
                                                          * left: entry_go, a MUTE turned (mute_to, GLO, MIXER, the editor)) */
@@ -1506,6 +1511,7 @@ static uint32_t scene_bits(uint32_t s)
     return SCENE_MEM(3u * s) | (uint32_t)SCENE_MEM(3u * s + 1u) << 8 | (uint32_t)SCENE_MEM(3u * s + 2u) << 16;
 }
 static int scene_used(uint32_t s) { return ((SCENE_MEM(48u) | (uint32_t)SCENE_MEM(49u) << 8) >> (s % SCENES)) & 1u; }
+static int scene_lm_used(uint32_t s) { return (SCENE_MEM(51u + 2u * (s % SCENES)) >> 6) & 1u; }
 /* track k in scene s: its entry's code (0 none, 1..16) | its MUTE << 5; SCENE_NOT: a scene not holding it */
 #define SCENE_NOT 64u
 static uint32_t scene_trk(uint32_t s, uint32_t k)
@@ -1529,7 +1535,7 @@ static uint32_t scene_now(void) { return scene_last; }
 /* the tracks as they are now into scene s: the entry each is on (bank_cur; none: on no entry's pattern), each MUTE */
 static void scene_store(uint32_t s)
 {
-    uint32_t v = 0, h = 1u << 15, k, m;
+    uint32_t v = 0, h = 3u << 14, k, m;   /* ((Tom Peak) bit 14: the lanes' mutes held) */
     s %= SCENES;
     for (k = 0; k < NTRK; k++) {
         uint32_t c = bank_cur(k), mu = trk[k].p[P_MUTE] != 0;
@@ -1547,6 +1553,7 @@ static void scene_store(uint32_t s)
     m = SCENE_MEM(48u) | (uint32_t)SCENE_MEM(49u) << 8 | 1u << s;
     SCENE_MEM(48u) = (uint8_t)m;
     SCENE_MEM(49u) = (uint8_t)(m >> 8);
+    memcpy(&SCENE_LM(NTRK * s), drum_mute, NTRK);  /* ((Tom Peak) the lanes' mutes) */
     scene_last = (uint8_t)s;
     bk.gen++;
 }
@@ -1572,6 +1579,8 @@ static int scene_recall(uint32_t s)
             rc = r;
         mute_to(k, e >> 5);
     }
+    if (scene_lm_used(s))
+        memcpy(drum_mute, &SCENE_LM(NTRK * s), NTRK);   /* ((Tom Peak) the lanes' mutes, at once) */
     scene_last = (uint8_t)s;
     bk.gen++;
     return rc;

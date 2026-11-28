@@ -79,8 +79,10 @@ def isr_reach(ir):
 # (Skiff 2.5) the giant main-loop functions: a helper that only one of them calls, inlined there, adds its locals to
 # that frame (ed_handle's 1,948 B, draw_graph's 1,680 B, ui_input's 1,624 B: past the short stack offsets) and costs
 # more than the call it saves. Out of line, all of them: ~3 KB less (the FM-1 dev image, 2026-11-08: 121 helpers
-# measured one by one and together; KEEP_INLINE the five that are smaller inlined; fm1_main's were larger out of line)
-GIANTS = ("draw_graph", "ui_input", "ed_handle", "ui_draw_page", "fm_draw", "edit_param")
+# measured one by one and together; KEEP_INLINE the five that are smaller inlined; fm1_main's were larger out of line).
+# (Tom Peak) draw_layer's and layer_keys' too: 416 B less (2026-11-28, for the scenes' lane mutes; draw_columns' and
+# draw_column's were larger)
+GIANTS = ("draw_graph", "ui_input", "ed_handle", "ui_draw_page", "fm_draw", "edit_param", "draw_layer", "layer_keys")
 KEEP_INLINE = ("midi_pc_poll", "unit_g_poll", "graph_follow", "scr_input", "rec_clear_poll")
 IR_CALL = re.compile(r"\bcall [^@\n]*@\"?([\w.]+)\"?\(")
 

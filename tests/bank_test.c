@@ -867,6 +867,51 @@ static int scenes(void)
     return bad;
 }
 
+/* ---- (Tom Peak) the DRUM lanes' mutes in a scene (bank.c scene_store / scene_recall, scene_lm): every track's,
+ * recalled at once, playing too; a scene stored before them leaves the lanes as they are; kept in SKF4 ---- */
+static int scenes_lanes(void)
+{
+    int bad = 0, ok;
+    static project_t pj, got;
+    static project_store_t w;
+    fresh();
+    drum_mute[0] = 0x05u;                         /* T1: KICK and CLAP muted, T6: BELL */
+    drum_mute[NTRK - 1u] = 0x80u;
+    scene_store(4);
+    memset(drum_mute, 0, sizeof drum_mute);
+    drum_mute[2] = 0x10u;                         /* (T3's, not in the scene: off after) */
+    ok = scene_lm_used(4) && !scene_lm_used(3) && scene_recall(4) == 0 && drum_mute[0] == 0x05u &&
+         drum_mute[NTRK - 1u] == 0x80u && !drum_mute[2] && scene_now() == 4u;
+    bad += check("(Tom Peak) a scene's lane mutes: every track's stored and recalled", ok);
+    memset(drum_mute, 0, sizeof drum_mute);
+    lv_start(LAUNCH_BAR);
+    lv_next(5);
+    ok = scene_recall(4) == 0 && drum_mute[0] == 0x05u && drum_mute[NTRK - 1u] == 0x80u;
+    transport_req = 2;
+    events_block(1);
+    bad += check("  recalled playing (BAR): the lanes at once, not staged", ok);
+    project_capture(&pj);
+    ok = proj_pack4(&w, &pj) && w.raw[PROJ_LM_AT + NTRK * 4u] == 0x05u && proj_import(&got, &w, PROJ_STORE4) &&
+         !memcmp(got.scene + PROJ_SCENES, scene_lm, sizeof scene_lm);
+    memset(scene_lm, 0, sizeof scene_lm);
+    memset(drum_mute, 0, sizeof drum_mute);
+    ok &= !project_restore_runtime(&got) && scene_lm_used(4) && scene_recall(4) == 0 && drum_mute[0] == 0x05u;
+    bad += check("  kept with the project (SKF4): a load brings them", ok);
+    memset(w.raw + PROJ_LM_AT, 0, PROJ_SCENE_LM);   /* (a record of before: none there) */
+    {
+        uint32_t sum = proj_hash(w.raw, PROJ_STORE4 - 4u);
+        memcpy(w.raw + PROJ_STORE4 - 4u, &sum, 4);
+    }
+    ok = proj_import(&got, &w, PROJ_STORE4) && !project_restore_runtime(&got) && !got.scene[PROJ_SCENES + NTRK * 4u];
+    lists.scene[51u + 2u * 4u] &= (uint8_t)~0x40u;   /* (its scene as firmware before stores it: bit 14 clear) */
+    ok &= !scene_lm_used(4) && scene_used(4);
+    drum_mute[0] = 0x22u;
+    ok &= scene_recall(4) == 0 && drum_mute[0] == 0x22u;
+    bad += check("  an SKF4 of before: its scenes without lane mutes, the lanes left as they are", ok);
+    memset(drum_mute, 0, sizeof drum_mute);
+    return bad;
+}
+
 /* ---- (phase 6) the last track in a scene (bank.c scene_trk: T5, T6 in 2 bytes a scene after the 50 of before); a
  * scene of four tracks (an SKF2's) leaves T5, T6 as they are; a pattern a saved SKF3 or SKF2 names is IN USE ---- */
 static int scenes_six(void)
@@ -1658,7 +1703,7 @@ static int song_chain(void)
 int main(void)
 {
     int bad = layout() + fidelity() + keep() + entries() + staged_all() + last_track() + torn() + wear_and_wrap() +
-              playing() + live() + scenes() + scenes_six() + song_test() + song_six() + song_rest() + song_once() +
+              playing() + live() + scenes() + scenes_six() + scenes_lanes() + song_test() + song_six() + song_rest() + song_once() +
               song_chain() + song_sound() + song_same() + song_next_edit() + migrate() + dx_kit_project();
     printf("%s\n", bad ? "BANK TEST FAILED" : "pattern bank tests passed");
     return bad != 0;

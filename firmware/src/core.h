@@ -474,6 +474,8 @@ enum { SONG_OFF, SONG_ON, SONG_ONCE };   /* ui.c lists.song ((2.0, #47, the user
                                         * (bank.c ent_block); firmware before refuses a project holding one */
 #define PROJ_SCENES 82u                /* the 16 scenes as bank.c keeps them: 3 bytes each, then a used mask, then
                                         * (Skiff phase 6) 2 bytes each for T5 and T6 */
+#define PROJ_SCENE_LM 96u              /* (Tom Peak) the scenes' DRUM lane mutes (bank.c): a byte a track a scene (bit
+                                        * 14 of its T5 T6 bytes: it holds them); SKF4's alone */
 typedef struct {
     uint8_t count, rsv[3];
     chain_row_t row[CHAIN_ROWS];
