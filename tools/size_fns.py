@@ -27,7 +27,14 @@ SIZE_FILES = ["ui.c", "favorites.c", "menu_items.c", "icons.c", "ui_graph.c", "u
               # (Skiff) its own main-loop files: the cards, the page graphs, the themes, FM6 LAB, DRUM-X's pages, HOME,
               # TAKES, SEQ TOOLS, the pool and its editor commands (what an interrupt reaches of them stays -Os)
               "ui_blocks.c", "ui_pgraph.c", "ui_crypt.c", "ui_neon.c", "ui_quark.c", "ui_fm6.c", "ui_dx.c", "ui_home.c",
-              "ui_take.c", "ui_tools.c", "bank.c", "take.c", "editor_project.c", "editor_song.c", "midi_learn.c", "launch.c", "perform.c", "follow.c", "throw.c", "master.c", "sync_out.c", "cast.c"]
+              "ui_take.c", "ui_tools.c", "bank.c", "take.c", "editor_project.c", "editor_song.c", "midi_learn.c", "launch.c", "perform.c", "follow.c", "throw.c", "master.c", "sync_out.c", "cast.c",
+              # (Tom Peak) the sound's files too: what neither interrupt reaches (isr_reach follows ENGINES[] and the
+              # other tables), the FM6 patches' pack and load, SLICE's manual edits, the sample scans, the lane
+              # names (2026-11-28: 700 B less; every render, note-on and voice path stays -Os)
+              "audio.c", "click.c", "drum_voice.c", "drumx_voice.c", "dsp.c", "duck.c", "eng_analog.c", "eng_digital.c",
+              "eng_drum.c", "eng_drumx.c", "eng_fm6.c", "eng_formant.c", "eng_grain.c", "eng_lofi.c", "eng_noise.c",
+              "eng_phase.c", "eng_phys.c", "eng_sample.c", "eng_slice.c", "eng_trio.c", "eng_wheel.c", "fm6_core.c",
+              "fx.c", "mod.c", "phys_dsp.c", "phys_symp.c", "slicer.c", "voice.c"]
 ISR_ROOTS = ("fm1_alnk0_irq", "fm1_timer5_irq")      # hal/fm1_isr.S: the audio ISR, the key / LED scan (+ USB poll)
 DEF = re.compile(r"^(?:static|void|int|uint\w*|int\w*|const)\b[^;=(]*?\b([A-Za-z_]\w*)\s*\(", re.M)
 IR_DEF = re.compile(r"^(define [^\n]*?@\"?([\w.]+)\"?\([^\n]*\)(?: unnamed_addr| local_unnamed_addr)?)( #\d+[^\n]*\{)$",
@@ -60,30 +67,38 @@ def size_names():
 
 IR_BODY = re.compile(r"^define [^\n]*?@\"?([\w.]+)\"?\((.*?)^\}", re.M | re.S)
 IR_REF = re.compile(r"@\"?([\w.]+)\"?")
+IR_GLOBAL = re.compile(r"^@\"?([\w.]+)\"? = ([^\n]*)$", re.M)
 
 
 def isr_reach(ir):
     """the functions an interrupt can run: ISR_ROOTS and, transitively, every function their bodies call or
-    name (a pointer taken there counts as called), from the unoptimised IR (before inlining: a superset)"""
+    name (a pointer taken there counts as called), from the unoptimised IR (before inlining: a superset).
+    (Tom Peak) A global they name counts too, with every function its initializer names: the engines' render
+    and note-on in ENGINES[] are how the audio ISR reaches them"""
     body = {m.group(1): m.group(2) for m in IR_BODY.finditer(ir)}
+    glob = {m.group(1): m.group(2) for m in IR_GLOBAL.finditer(ir)}
     seen, todo = set(), [r for r in ISR_ROOTS if r in body]
     while todo:
         f = todo.pop()
         if f in seen:
             continue
         seen.add(f)
-        todo += [g for g in IR_REF.findall(body[f]) if g in body and g not in seen]
-    return seen
+        text = body.get(f, glob.get(f, ""))
+        todo += [g for g in IR_REF.findall(text) if (g in body or g in glob) and g not in seen]
+    return {f for f in seen if f in body}
 
 
 # (Skiff 2.5) the giant main-loop functions: a helper that only one of them calls, inlined there, adds its locals to
 # that frame (ed_handle's 1,948 B, draw_graph's 1,680 B, ui_input's 1,624 B: past the short stack offsets) and costs
 # more than the call it saves. Out of line, all of them: ~3 KB less (the FM-1 dev image, 2026-11-08: 121 helpers
-# measured one by one and together; KEEP_INLINE the five that are smaller inlined; fm1_main's were larger out of line).
+# measured one by one and together; KEEP_INLINE the ones that are smaller inlined; fm1_main's were larger out of line).
 # (Tom Peak) draw_layer's and layer_keys' too: 416 B less (2026-11-28, for the scenes' lane mutes; draw_columns' and
-# draw_column's were larger)
-GIANTS = ("draw_graph", "ui_input", "ed_handle", "ui_draw_page", "fm_draw", "edit_param", "draw_layer", "layer_keys")
-KEEP_INLINE = ("midi_pc_poll", "unit_g_poll", "graph_follow", "scr_input", "rec_clear_poll")
+# draw_column's were larger); then every main-loop function of 450 B and more measured alone, the 12 smaller with
+# theirs out of line kept: 348 B less together; midi_pc_poll's out of line since (16 B less)
+GIANTS = ("draw_graph", "ui_input", "ed_handle", "ui_draw_page", "fm_draw", "edit_param", "draw_layer", "layer_keys",
+          "draw_menu", "text_run", "take_commit", "undo_step", "draw_foot", "graph_tracks", "seq_entry", "slc_user_scan",
+          "song_knob", "cursor_keys", "fm_cards_of", "cv_alpha_hc")
+KEEP_INLINE = ("unit_g_poll", "graph_follow", "scr_input", "rec_clear_poll")
 IR_CALL = re.compile(r"\bcall [^@\n]*@\"?([\w.]+)\"?\(")
 
 
