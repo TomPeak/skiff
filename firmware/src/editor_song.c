@@ -25,6 +25,10 @@
  *     none, 1 to unmute, 2 to mute) */
 enum { ED_POOL = 78, ED_LIST, ED_PERFORM };
 enum { ED_LIST2 = 82 };
+/* (Tom Peak) LANES (112: firmware without it answers nothing): [track, lane: that DRUM lane's mute the other way, as
+ * EDIT's black keys] -> rc (1: not a DRUM or DRUM-X track, nothing turned), then each track's lane mutes, 2 bytes
+ * (bits 0..6, bit 7: BELL), bit n set: lane n (KICK .. BELL) muted. A scene keeps them (bank.c) */
+enum { ED_LANES = 112 };
 #define ED_SONG2 3u                                 /* (2.0) INFO 58 01: bit 0 LIST2, LIST's ops 7 8, REPS 0, SONG 2,
                                                      * POOL's 2 3; ((#30) bit 1: LIST2's entry sounds, its op 9) */
 
@@ -32,6 +36,8 @@ static int ed_song_args_ok(uint32_t cmd, const uint8_t *a, uint32_t n)
 {
     if (!n)
         return 1;
+    if (cmd == ED_LANES)
+        return n == 2u && a[0] < NTRK && a[1] < NLANE;
     if (cmd == ED_POOL)
         return (n == 2u && a[0] >= 1u && a[0] <= 2u && a[1] < NPAT) || (n == 1u && a[0] == 3u);
     if (cmd == ED_LIST || cmd == ED_LIST2) {
@@ -122,6 +128,16 @@ static int ed_song_handle(uint32_t cmd, const uint8_t *a, uint32_t n)
                     ed_b(r & 128u ? 0u : lists.snd[k][e][1]);
                 }
             }
+        }
+        return 1;
+    }
+    if (cmd == ED_LANES) {
+        if (n && drum_track(&trk[a[0]]))
+            lane_mute_switch(a[0], a[1]);
+        ed_b(n && !drum_track(&trk[a[0]]));
+        for (k = 0; k < NTRK; k++) {
+            ed_b(drum_mute[k] & 127u);
+            ed_b(drum_mute[k] >> 7);
         }
         return 1;
     }

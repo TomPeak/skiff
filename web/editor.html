@@ -642,7 +642,7 @@ const CMD = { INFO: 1, GET: 2, SET: 3, DUMP: 4, DESC: 5, STEP_GET: 6, STEP_SET: 
   UI_STATE: 34, UI_SET: 35, UI_PALETTES: 36, FAV_GET: 37, FAV_SET: 38, COLORS: 39,
   MOTION: 64, BACKUP_LIST: 65, BACKUP_GET: 66, BACKUP_PUT: 67,
   FM6_GET: 68, FM6_PUT: 69, FM6_LIST: 70, FM6_ERASE: 71, MENU_DESC: 72, MENU_SET: 73, KIT_GET: 74, KIT_PUT: 75, TRANSPORT: 76, PROJ_NAME: 77, POOL: 78, LIST: 79, PERFORM: 80,
-  SMP_MIX: 81, LIST2: 82, CAST: 83, PANEL: 84 };
+  SMP_MIX: 81, LIST2: 82, CAST: 83, PANEL: 84, LANES: 112 };
 /* frames the device sends on its own (while WATCH is on); never replies */
 const PUSH = new Set([CMD.CHANGED, CMD.RELOAD, CMD.STEP_CHANGED, CMD.TRACK_CHANGED]);
 /* user preset bank: name 1..12 printable ASCII, a 16-step pattern of (note, flags 1 acc 2 slide 4 tie) */
@@ -968,6 +968,12 @@ const parse = {
     while (r.i < a.length) o.tracks.push({ muted: !!r.b(), staged: r.b() });
     return o;
   },
+  /* (Tom Peak) LANES: rc (1: not a DRUM track), then each track's lane mutes (2 bytes: bits 0..6, BELL) */
+  [CMD.LANES](a) {
+    const r = new Reader(a), o = { rc: r.b(), mute: [] };
+    while (r.i + 2 <= a.length) o.mute.push(r.b() | r.b() << 7);
+    return o;
+  },
   [CMD.PROJECT](a) { const r = new Reader(a); return { op: r.b(), slot: r.b(), used: r.b() }; },
   [CMD.SONG](a) {
     const r = new Reader(a);
@@ -1172,6 +1178,7 @@ const req = {
   list: (op = 0, k = 0, e = 0, v = null, two = false) => [two ? CMD.LIST2 : CMD.LIST,
     !op ? [] : op === 6 ? [6, Math.max(0, Math.min(2, +k | 0))] : v == null ? [op, k, e] : [op, k, e, ...[v].flat().map((x) => x & 0x7F)]],
   perform: (op = 0, v = 0) => [CMD.PERFORM, !op ? [] : op === 4 ? [4] : [op, v]],   /* 1 STORE, 2 RECALL, 3 MUTE, 4 CANCEL, 5 LAUNCH */
+  lanes: (k, l) => [CMD.LANES, k == null ? [] : [k, l]],   /* (Tom Peak) the lanes' mutes; track k's lane l the other way */
   projName: (op = 0, slot = 0, name = "") => [CMD.PROJ_NAME, op ? [op, slot & 3, ...strEnc(cleanProjName(name))] : []],   /* 1 SAVE AS, 2 RENAME */
 };
 /* (Skiff W3) the device's MENU settings, each as MENU_DESC describes it (none asked of firmware without them) */
@@ -1343,8 +1350,9 @@ function apcLeds(list, perf, page, playing, tracks = [], storing = false) {
    one picked, its lanes a column each (KICK at the left, BELL at the right, the fader under it its level): a lane the
    pattern strikes a red bar as high as its LEVEL (0..127: 0..8 pads, the top one 100 %, under it 50 %), at LEVEL 0 its
    bottom pad dim white; a lane it doesn't strike dark; the bottom buttons 1..8 its lanes' mutes, lit when muted
-   (LEVEL 0). The bottom side button PLAY. dr: {drums: a bit a track, k: the track shown (-1 none), used: the lanes
-   its pattern strikes, lv: their levels} or none */
+   (the lane's MUTE, (Tom Peak) LANES; a Skiff without it: LEVEL 0). The bottom side button PLAY. dr: {drums: a bit a
+   track, k: the track shown (-1 none), used: the lanes its pattern strikes, lv: their levels, mute: its lanes' mutes
+   (a bit a lane; null: no LANES)} or none */
 function apcDrumLeds(dr, playing) {
   const m = new Map(), shown = !!dr && dr.k >= 0 && !!dr.lv, hue = APC.RED;
   for (let n = 0; n < 64; n++) {
@@ -1357,7 +1365,8 @@ function apcDrumLeds(dr, playing) {
     m.set(n, led);
   }
   for (let k = 0; k < 8; k++)
-    m.set(APC.MUTE + k, [APC.BTN, !dr ? 0 : dr.k >= 0 ? +(shown && dr.lv[k] === 0) : +(k < 6 && !!(dr.drums >> k & 1))]);
+    m.set(APC.MUTE + k, [APC.BTN, !dr ? 0 : dr.k >= 0 ? +(shown && (dr.mute != null ? !!(dr.mute >> k & 1) : dr.lv[k] === 0)) :
+      +(k < 6 && !!(dr.drums >> k & 1))]);
   m.set(APC.DRUM, [APC.BTN, 1]);
   m.set(APC.PLAY, [APC.BTN, playing ? 1 : 0]);
   return m;
@@ -4236,9 +4245,10 @@ async function apcDrumRead(d = dev, poll = false) {
   const lv = d.info.pe0 >= 91 ? P_LANES.map((id) => t.p[id]) : LANES.map(() => 127);
   const from = poll ? (x.scan || 0) % len : 0, to = poll ? Math.min(len, from + 8) : len, steps = poll && x.k === k ? x.steps.slice() : [];
   for (let i = from; i < to; i++) steps[i] = parse[CMD.TRACK_STEP](await rqs(req.trackStep(k, i)));
+  const mute = await apcLanesRead(d, k);
   if (apc.drum !== x || x.gen !== gen || d !== dev) return;
   const used = steps.slice(0, len).reduce((u, s) => u | (s ? stepLanes(s) : 0), 0);
-  Object.assign(x, { drums, k, len, lv, steps, used, scan: to % len });
+  Object.assign(x, { drums, k, len, lv, steps, used, mute, scan: to % len });
   apcShow();
 }
 /* fader l: the shown track's lane l level (P_LN0..7), the latest value only (Link coalesces by key) */
@@ -4251,10 +4261,30 @@ function apcLane(l, v) {
     if (d === dev && k === (d.sel || 0) && d.dump) { d.dump.p[id] = r.value; showValue(key(0, id), r.value, false); }
   }).catch(() => {});
 }
-/* bottom button l: lane l muted (LEVEL 0) or back to the level it had (127 when it had none here) */
+/* (Tom Peak) track k's lane mutes (LANES), null on a Skiff without it (asked once: it answers nothing) */
+async function apcLanesRead(d, k) {
+  if (d.lanes === false) return null;
+  try {
+    const r = parse[CMD.LANES](await sessionRequest(d, req.lanes(), { timeout: 300, retries: d.lanes ? 1 : 0, quiet: true }));
+    d.lanes = true;
+    return r.mute[k] ?? null;
+  } catch (e) {
+    if (d.lanes === undefined) d.lanes = false;
+    return null;
+  }
+}
+/* bottom button l: lane l's MUTE the other way ((Tom Peak) LANES: as EDIT's black keys, a scene keeps it); a Skiff
+   without it: muted as LEVEL 0 or back to the level it had (127 when it had none here) */
 function apcLaneMute(l) {
-  const x = apc.drum, j = `${x.k}:${l}`;
+  const x = apc.drum, d = dev, k = x.k, j = `${x.k}:${l}`;
   if (!x.lv) return;
+  if (d && d.lanes) {
+    sessionRequest(d, req.lanes(k, l), { quiet: true }).then((a) => {
+      const r = parse[CMD.LANES](a);
+      if (apc.drum === x && x.k === k && r.mute[k] != null) { x.mute = r.mute[k]; x.gen++; apcShow(); }
+    }).catch(() => {});
+    return;
+  }
   if (x.lv[l]) { apc.keep[j] = x.lv[l]; apcLane(l, 0); }
   else apcLane(l, apc.keep[j] || 127);
 }

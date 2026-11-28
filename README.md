@@ -114,7 +114,8 @@ fork, build it (`./build.sh`) and install `build/felucca.fwsc` with `tools/fm1_i
 **On the unit, PERFORM's scenes**
 
 - **A scene keeps the DRUM lanes' mutes too** (EDIT's black keys, every track's), saved with the project. Recalled,
-  they switch at once, playing or not; a scene stored before leaves the lanes as they are.
+  they switch at once, playing or not; a scene stored before leaves the lanes as they are. The APC's drum-mode mute
+  buttons turn those same mutes (the editor's LANES), so a scene keeps them too.
 
 **In the Skiff Editor**
 

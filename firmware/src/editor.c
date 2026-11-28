@@ -427,7 +427,7 @@ static int ed_args_ok(uint32_t cmd, const uint8_t *a, uint32_t n)
         return n == 3u;
     case ED_TRANSPORT: case ED_PROJ_NAME:
         return ed_project_args_ok(cmd, a, n);
-    case ED_POOL: case ED_LIST: case ED_PERFORM: case ED_LIST2:
+    case ED_POOL: case ED_LIST: case ED_PERFORM: case ED_LIST2: case ED_LANES:
         return ed_song_args_ok(cmd, a, n);
     case ED_KIT_GET:                                   /* (Skiff W3) a lane; a lane and its 15 values, each in range */
         return n == 1u && a[0] < 8u;

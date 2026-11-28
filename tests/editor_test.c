@@ -1407,6 +1407,25 @@ static int song_cmds(void)
     a[0] = 4; a[1] = 0;
     ok &= !request(ED_PERFORM, a, 2);
     bad += check("PERFORM: scenes kept, STORE, RECALL (empty said), MUTE (at once, staged), CANCEL, LAUNCH; bad unanswered", ok);
+    {                                                    /* ((Tom Peak) LANES: a DRUM track's lane mutes) */
+        uint8_t was = trk[5].eng_req;
+        memset(drum_mute, 0, sizeof drum_mute);
+        trk[5].eng_req = ENGI_DRUM;
+        ok = request(ED_LANES, 0, 0) == 19u && !host_wire[5] && !host_wire[16];
+        a[0] = 5; a[1] = 7;
+        ok &= request(ED_LANES, a, 2) && !host_wire[5] && drum_mute[5] == 0x80u && !host_wire[16] && host_wire[17] == 1;
+        a[1] = 0;
+        ok &= request(ED_LANES, a, 2) && drum_mute[5] == 0x81u && host_wire[16] == 1 && scene_now() == 0xFFu;
+        trk[5].eng_req = ENGI_FM6;
+        ok &= request(ED_LANES, a, 2) && host_wire[5] == 1 && drum_mute[5] == 0x81u;   /* (not a DRUM track: rc 1) */
+        a[0] = 6;
+        ok &= !request(ED_LANES, a, 2);
+        a[0] = 5; a[1] = 8;
+        ok &= !request(ED_LANES, a, 2);
+        bad += check("(Tom Peak) LANES: a DRUM track's lane mutes turned and read, every track's; bad unanswered", ok);
+        memset(drum_mute, 0, sizeof drum_mute);
+        trk[5].eng_req = was;
+    }
     ui_launch = 0;
     return bad;
 }

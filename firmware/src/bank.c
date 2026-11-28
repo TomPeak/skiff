@@ -1484,6 +1484,15 @@ static void mute_switch(uint32_t k)
         ui_say(b, LAUNCH_AT[launch_mode()]);
     }
 }
+/* ((1.3) EDIT's black keys; (Tom Peak) the editor's LANES too) track k's lane l muted the other way, latched (eng_drum.c
+ * drum_mute); said, the scene left */
+static void lane_mute_switch(uint32_t k, uint32_t l)
+{
+    drum_mute[k] ^= (uint8_t)(1u << l);
+    scene_forget();
+    ui_say(drum_lane_name(&trk[k], l), (drum_mute[k] >> l) & 1u ? " MUTED" : " ON");
+    ui.force = 1;
+}
 
 /* ---- scenes: the PERFORM layer's KEYS SCENE (KNOB 2) ----
  * A scene: the entry each track is on (A..P; none: that track left as it is) and the MUTEs. Recalled, each track's

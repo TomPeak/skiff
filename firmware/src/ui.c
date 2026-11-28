@@ -78,6 +78,7 @@ static uint32_t bank_next(uint32_t k);
 static int bank_cancel(uint32_t k);
 static int stage_cancel(void);
 static void mute_switch(uint32_t k);
+static void lane_mute_switch(uint32_t k, uint32_t l);
 static int scene_used(uint32_t s);              /* (Skiff) scenes (bank.c) */
 static uint32_t scene_slot(uint32_t s, uint32_t k);
 static uint32_t scene_now(void);
